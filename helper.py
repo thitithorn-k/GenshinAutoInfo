@@ -32,7 +32,7 @@ def get_pos_from_contours(contours, smallest_size=(5, 5)):
     for (i, c) in enumerate(contours):
         (x, y, w, h) = cv2.boundingRect(c)
         if w > smallest_size[0] and h > smallest_size[1]:
-            pos.append((x, y-2 if y-2 >= 0 else 0, w, h+2))
+            pos.append((x, y-1 if y-1 >= 0 else 0, w, h))
 
     return pos
 

@@ -183,7 +183,11 @@ def run(test=False):
         sub_stat_crop_value.append(value)
 
     sub_stat_name = read_sub_stat_name(sub_stat_crop_name)
-    read_sub_stat_value(sub_stat_crop_value)
+    sub_stat_value = read_sub_stat_value(sub_stat_crop_value)
+
+    if sub_stat_name:
+        for i, each_sub in enumerate(sub_stat_name):
+            print(each_sub, '+', sub_stat_value[i][0], '%' if sub_stat_value[i][1] else '')
 
 
 # split full sub stat crop to it's name and value
@@ -201,7 +205,8 @@ def split_sub_stat_name_and_value(sub_stat_crop_img):
 
 # read text of the array of sub stat_crop_name's image
 def read_sub_stat_name(sub_stat_name_img):
-    sub_stat = []
+    result = []
+    sub_stat_i = []
     if len(sub_stat_name_img) > 0:
         for each_sub_stat_name in sub_stat_name_img:
             each_sub_stat_name_gray = cv2.cvtColor(each_sub_stat_name, cv2.COLOR_BGR2GRAY)
@@ -222,75 +227,101 @@ def read_sub_stat_name(sub_stat_name_img):
                     most_match = max_res
                     most_match_i = o
 
-            sub_stat.append(most_match_i)
-            print('============================')
+            sub_stat_i.append(most_match_i)
 
         # print each sub stat text
-        for i, each in enumerate(sub_stat):
-            print(i, ':', Data.sub_stats_name[each])
+        for each in sub_stat_i:
+            result.append(Data.sub_stats_name[each])
     else:
         print('This artifact don\'t have sub stats.')
 
-    print('=============================================')
-
-    return sub_stat
+    return result
 
 
 def read_sub_stat_value(sub_stat_value):
     if len(sub_stat_value) <= 0:
         return
-    sub_stat_value_img = sub_stat_value[0]
+    result = []
+    for a, sub_stat_value_img in enumerate(sub_stat_value):
+        # cv2.imshow('sub',sub_stat_value_img)
 
-    cv2.imshow('sub',sub_stat_value_img)
+        sub_stat_value_img = imutils.resize(sub_stat_value_img, height=105)
 
-    sub_stat_value_img = imutils.resize(sub_stat_value_img, height=45)
-
-    sub_stat_value_img_gray = cv2.cvtColor(sub_stat_value_img, cv2.COLOR_BGR2GRAY)
-    sub_stat_value_img_bw = cv2.threshold(sub_stat_value_img_gray, 170, 255, cv2.THRESH_BINARY)[1]
-
-    rect_num_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 20))
-    sub_stat_value_img_morp = cv2.morphologyEx(sub_stat_value_img_bw, cv2.MORPH_CLOSE, rect_num_kernel)
-
-    sub_stat_value_cont = cv2.findContours(sub_stat_value_img_morp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    sub_stat_value_cont = imutils.grab_contours(sub_stat_value_cont)
-
-    cut_num = cut_image_from_contours(sub_stat_value_img_bw, sub_stat_value_cont, True)
-
-    percent = 0
-    value = 0
-    decimal = 0
-
-    for i, each_cut_num in enumerate(cut_num):
-        cv2.imshow(f'cut{i}', each_cut_num)
-        if each_cut_num.shape[0] < 15:
-            value *= 1/(10**(i-percent))
-            decimal = i
-        elif each_cut_num.shape[1] < 20:
-            value += 1*(10**(i-percent-decimal))
+        # cv2.imshow(f'{a}sub_resize', sub_stat_value_img)
+        mean = cv2.mean(sub_stat_value_img)
+        mean = np.mean(mean)
+        if mean > 120:
+            adaptive = 170
+        elif mean > 110:
+            adaptive = 165
+        elif mean > 107:
+            adaptive = 160
+        elif mean > 102:
+            adaptive = 150
+        elif mean > 97:
+            adaptive = 145
         else:
-            pass
-            each_cut_num_expand = cv2.copyMakeBorder(each_cut_num, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+            adaptive = 140
 
-            most_match = None
-            most_match_i = None
-            for j, each_temp_num_i in enumerate(Data.number_pos):
-                if j == 1:
-                    continue
-                each_temp_num = get_gray_image(each_temp_num_i)
-                # cv2.imshow(f'{j}eeee', each_temp_num)
-                res = cv2.matchTemplate(each_cut_num_expand, each_temp_num, cv2.TM_CCOEFF_NORMED)
-                threshold = 0.6
-                loc = np.where(res >= threshold)
-                max_res = cv2.minMaxLoc(res)[1]
-                if most_match is None or max_res > most_match:
-                    most_match = max_res
-                    most_match_i = j
-            # cv2.imshow(f'num-{i}-{most_match_i}', get_gray_image(Data.number_pos[most_match_i]))
+        sub_stat_value_img_gray = cv2.cvtColor(sub_stat_value_img, cv2.COLOR_BGR2GRAY)
+        sub_stat_value_img_bw = cv2.threshold(sub_stat_value_img_gray, adaptive, 255, cv2.THRESH_TOZERO)[1]
+        # cv2.imshow(f'{a}testaaa', sub_stat_value_img_bw)
+        sub_stat_value_img_bw_for_match = cv2.threshold(sub_stat_value_img_gray, adaptive, 255, cv2.THRESH_BINARY)[1]
 
-            if most_match_i == 10:
-                percent = 1
+
+        rect_num_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 100))
+        sub_stat_value_img_morp = cv2.morphologyEx(sub_stat_value_img_bw, cv2.MORPH_CLOSE, rect_num_kernel)
+        # cv2.imshow(f'{a}testabbbaa', sub_stat_value_img_morp)
+
+        sub_stat_value_cont = cv2.findContours(sub_stat_value_img_morp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        sub_stat_value_cont = imutils.grab_contours(sub_stat_value_cont)
+
+        cut_num = cut_image_from_contours(sub_stat_value_img_bw_for_match, sub_stat_value_cont, True)
+
+        temp_num = []
+        for each_num_pos in Data.number_pos:
+            num_img = get_gray_image(each_num_pos)
+            num_img = imutils.resize(num_img, height=100)
+            temp_num.append(num_img)
+
+        percent = 0
+        value = 0
+        decimal = 0
+
+        for i, each_cut_num in enumerate(cut_num):
+            cv2.imshow(f'{a}cut{i}', each_cut_num)
+            if each_cut_num.shape[0] < 45 and each_num_pos[1] < 45:
+                if decimal == 0:
+                    value *= 1/(10**(i-percent))
+                    decimal = i
+            elif each_cut_num.shape[1] < 45 and each_cut_num.shape[0] > 45:
+                value += 1*(10**(i-percent-decimal))
             else:
-                value += most_match_i * (10**(i-percent-decimal))
-    print(value, '%' if percent else '')
+                pass
+                each_cut_num_expand = cv2.copyMakeBorder(each_cut_num, 50, 50, 50, 50, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+
+                most_match = None
+                most_match_i = None
+                for j, each_temp_num in enumerate(temp_num):
+                    if j == 1:
+                        continue
+                    # cv2.imshow(f'{j}eeee', each_temp_num)
+                    res = cv2.matchTemplate(each_cut_num_expand, each_temp_num, cv2.TM_CCOEFF_NORMED)
+                    threshold = 0.6
+                    loc = np.where(res >= threshold)
+                    max_res = cv2.minMaxLoc(res)[1]
+                    if most_match is None or max_res > most_match:
+                        most_match = max_res
+                        most_match_i = j
+                # cv2.imshow(f'num-{i}-{most_match_i}', get_gray_image(Data.number_pos[most_match_i]))
+
+                if most_match_i == 10:
+                    percent = 1
+                    value = 0
+                else:
+                    value += most_match_i * (10**(i-percent-decimal))
+        # print(value, '%' if percent else '')
+        result.append([value, True if percent else False])
+    return result
 
 
