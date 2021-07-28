@@ -2,8 +2,7 @@ import numpy as np
 import imutils
 import random
 
-from data import get_gray_image
-from data import Data
+from data import get_data
 from helper import *
 
 from data import *
@@ -20,6 +19,20 @@ test_image = (
     './testim/test-full8.png',
     './testim/test-full9.png',
     './testim/test-full10.png',
+    './testim/test-full11.png'
+)
+
+test_image2 = (
+    './testim/test4.png',
+    './testim/test-full2.png',
+    './testim/test-full3.png',
+
+    './testim/test-full5.png',
+
+    './testim/test-full7.png',
+
+    './testim/test-full9.png',
+
     './testim/test-full11.png'
 )
 
@@ -42,7 +55,10 @@ def run(test=False):
 
     img = None
     if test:
-        img = cv2.imread(test_image[random.randint(0, len(test_image) - 1)])
+        img_random = random.randint(1, 19)
+        img_name = f'./testim/test-full{img_random}.png'
+        img = cv2.imread(img_name)
+        print(f'random={img_random}')
     else:
         img = np.array(get_screen())
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -58,7 +74,7 @@ def run(test=False):
 
     # load star_img_gray image from data.py, change it to gray scale
     # and put size of it to var
-    star_img_gray = get_gray_image(Data.star)
+    star_img_gray = get_data('star')
     w, h = star_img_gray.shape[::-1]
 
     # each_sub_stat_crop_gray any star_img_gray and draw rect over it
@@ -172,6 +188,8 @@ def run(test=False):
     cv2.imshow(f'find_star', find_star)
     # return main_stat_crop
 
+    # np.save('data1.npy', sub_stat_crop)
+
     # ==========================================================================
 
     # split sub_stat_crop to name and value
@@ -186,14 +204,35 @@ def run(test=False):
     sub_stat_value = read_sub_stat_value(sub_stat_crop_value)
 
     if sub_stat_name:
+        print('sub stat ==================================')
         for i, each_sub in enumerate(sub_stat_name):
             print(each_sub, '+', sub_stat_value[i][0], '%' if sub_stat_value[i][1] else '')
+    else:
+        print('This artifact doesn\'t have sub stats')
+
+    print('===========================================')
+
+    split_main_stat_name_and_value(main_stat_crop)
+
+
+def split_main_stat_name_and_value(main_stat_crop_img):
+    main_stat_crop_img_gray = cv2.cvtColor(main_stat_crop_img, cv2.COLOR_BGR2GRAY)
+    main_stat_crop_img_bw = cv2.threshold(main_stat_crop_img_gray, 200, 255, cv2.THRESH_BINARY)[1]
+
+    main_stat_rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 30))
+    main_stat_crop_img_morp = cv2.morphologyEx(main_stat_crop_img_bw, cv2.MORPH_CLOSE, main_stat_rect_kernel)
+    main_stat_crop_img_cont = cv2.findContours(main_stat_crop_img_morp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    main_stat_crop_img_cont = imutils.grab_contours(main_stat_crop_img_cont)
+
+    cut_main_stat = cut_image_from_contours(main_stat_crop_img_bw, main_stat_crop_img_cont, True)
+    for i, each_cut in enumerate(cut_main_stat):
+        cv2.imshow(f'{i}cut_main', each_cut)
 
 
 # split full sub stat crop to it's name and value
-# return image of it's name and value
+# return [name:Image, value:Image]
 def split_sub_stat_name_and_value(sub_stat_crop_img):
-    plus_img_gray = get_gray_image(Data.plus)
+    plus_img_gray = get_data('plus')
 
     sub_stat_crop_img_grey = cv2.cvtColor(sub_stat_crop_img, cv2.COLOR_BGR2GRAY)
     res = cv2.matchTemplate(sub_stat_crop_img_grey, plus_img_gray, cv2.TM_CCOEFF_NORMED)
@@ -204,6 +243,7 @@ def split_sub_stat_name_and_value(sub_stat_crop_img):
 
 
 # read text of the array of sub stat_crop_name's image
+# return array[name_of_stat:String]
 def read_sub_stat_name(sub_stat_name_img):
     result = []
     sub_stat_i = []
@@ -214,10 +254,9 @@ def read_sub_stat_name(sub_stat_name_img):
             o = 0
             most_match = None
             most_match_i = None
-            for o, each_stat_pos in enumerate(Data.sub_stats_pos):
-                if o == 0:
-                    continue
-                compare_stat_gray = get_gray_image(each_stat_pos)
+            sub_stat_img = get_data('sub_stat_img')
+            for o, each_stat_img in enumerate(sub_stat_img):
+                compare_stat_gray = each_stat_img
                 each_sub_stat_name_bw = cv2.threshold(each_sub_stat_name_gray, 180, 255, cv2.THRESH_BINARY)[1]
                 each_sub_stat_name_bw = cv2.copyMakeBorder(each_sub_stat_name_bw, 10, 10, 50, 50, cv2.BORDER_CONSTANT,
                                                            value=[0, 0, 0])
@@ -231,13 +270,15 @@ def read_sub_stat_name(sub_stat_name_img):
 
         # print each sub stat text
         for each in sub_stat_i:
-            result.append(Data.sub_stats_name[each])
+            result.append(get_data('sub_stat_name')[each])
     else:
         print('This artifact don\'t have sub stats.')
 
     return result
 
 
+# read number of the array of sub_stat_crop_value's image
+# return array[value_of_stat:int, is it percent: bool]
 def read_sub_stat_value(sub_stat_value):
     if len(sub_stat_value) <= 0:
         return
@@ -265,13 +306,12 @@ def read_sub_stat_value(sub_stat_value):
 
         sub_stat_value_img_gray = cv2.cvtColor(sub_stat_value_img, cv2.COLOR_BGR2GRAY)
         sub_stat_value_img_bw = cv2.threshold(sub_stat_value_img_gray, adaptive, 255, cv2.THRESH_TOZERO)[1]
-        # cv2.imshow(f'{a}testaaa', sub_stat_value_img_bw)
+        cv2.imshow(f'{a}testaaa', sub_stat_value_img_bw)
         sub_stat_value_img_bw_for_match = cv2.threshold(sub_stat_value_img_gray, adaptive, 255, cv2.THRESH_BINARY)[1]
-
 
         rect_num_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 100))
         sub_stat_value_img_morp = cv2.morphologyEx(sub_stat_value_img_bw, cv2.MORPH_CLOSE, rect_num_kernel)
-        # cv2.imshow(f'{a}testabbbaa', sub_stat_value_img_morp)
+        cv2.imshow(f'{a}testabbbaa', sub_stat_value_img_morp)
 
         sub_stat_value_cont = cv2.findContours(sub_stat_value_img_morp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         sub_stat_value_cont = imutils.grab_contours(sub_stat_value_cont)
@@ -279,9 +319,9 @@ def read_sub_stat_value(sub_stat_value):
         cut_num = cut_image_from_contours(sub_stat_value_img_bw_for_match, sub_stat_value_cont, True)
 
         temp_num = []
-        for each_num_pos in Data.number_pos:
-            num_img = get_gray_image(each_num_pos)
-            num_img = imutils.resize(num_img, height=100)
+        number = get_data('number')
+        for each_num_img in number:
+            num_img = imutils.resize(each_num_img, height=100)
             temp_num.append(num_img)
 
         percent = 0
@@ -289,12 +329,12 @@ def read_sub_stat_value(sub_stat_value):
         decimal = 0
 
         for i, each_cut_num in enumerate(cut_num):
-            cv2.imshow(f'{a}cut{i}', each_cut_num)
-            if each_cut_num.shape[0] < 45 and each_num_pos[1] < 45:
-                if decimal == 0:
+            # cv2.imshow(f'{a}cut{i}', each_cut_num)
+            if each_cut_num.shape[0] < 45 and each_cut_num.shape[1] < 45:  # if it's 'dot'
+                if decimal == 0 and i != 0:
                     value *= 1/(10**(i-percent))
                     decimal = i
-            elif each_cut_num.shape[1] < 45 and each_cut_num.shape[0] > 45:
+            elif each_cut_num.shape[1] < 45 and each_cut_num.shape[0] > 45:  # if it's 1
                 value += 1*(10**(i-percent-decimal))
             else:
                 pass
@@ -323,5 +363,7 @@ def read_sub_stat_value(sub_stat_value):
         # print(value, '%' if percent else '')
         result.append([value, True if percent else False])
     return result
+
+
 
 

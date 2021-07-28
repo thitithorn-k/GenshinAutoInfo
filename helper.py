@@ -42,6 +42,7 @@ def get_screen():
 
     def enum_cb(hwnd, results):
         winlist.append((hwnd, win32gui.GetWindowText(hwnd)))
+
     win32gui.EnumWindows(enum_cb, toplist)
 
     genshin = [(hwnd, title) for hwnd, title in winlist if ('genshin impact' or '原神') in title.lower()]
@@ -49,7 +50,6 @@ def get_screen():
         print('not found genshin\'s window')
         return
 
-    genshin = genshin[0]
     hwnd = genshin[0]
 
     win32gui.SetForegroundWindow(hwnd)

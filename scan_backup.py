@@ -98,7 +98,7 @@ def run(test=False):
 
     # load star_img image from data.py, change it to gray scale
     # and put size of it to var
-    star_img = get_gray_image(data.star)
+    star_img = get_data(data.star)
     star_img = cv2.cvtColor(star_img, cv2.COLOR_BGR2GRAY)
     w, h = star_img.shape[::-1]
 

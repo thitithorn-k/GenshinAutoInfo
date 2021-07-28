@@ -1,20 +1,28 @@
-from imutils import contours
-import numpy
-import argparse
-import imutils
 import cv2
-import pytesseract
+import numpy as np
 
-pytesseract.pytesseract.tesseract_cmd = 'E:\\Program Files (x86)\\Tesseract-OCR\\tesseract.exe'
+def run():
+    # save_numpy()
+    load_numpy()
+    pass
+
+# for run in Python console Only
+def load_numpy():
+    load_data = np.load('./data/sub_stat.npy', allow_pickle=True)
+    sub = load_data.item().get('sub_stat')
+    for i, d in enumerate(sub):
+        cv2.imshow(f'{i}', d)
 
 
-def read():
-    print('read')
+def load_dict():
+    load = np.load('./data/data.v2.npy', allow_pickle=True)
 
-    # text = pytesseract.image_to_string(img)
-    # print(text)
+    dict = {}
+    dict['sub_stat_img'] = load.item().get('sub_stat_img')
+    dict['sub_stat_name'] = load.item().get('sub_stat_name')
+    dict['number'] = load.item().get('number')
+    dict['star'] = load.item().get('star')
+    dict['plus'] = load.item().get('plus')
 
+    return dict
 
-def read_img(img):
-    text = pytesseract.image_to_string(img, lang="tha+eng", timeout=2)
-    print(text)
