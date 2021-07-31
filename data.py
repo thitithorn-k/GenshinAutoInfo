@@ -2,7 +2,16 @@ import cv2
 import numpy as np
 
 
-# class Data:
+class Data:
+
+    sub_stats_name = [
+        'star', 'hp', 'cri_dmg', 'attack', 'defend', 'cri_rate', 'element', 'energy'
+    ]
+
+    main_stats_name = [
+        'hp', 'attack', 'element', 'energy', 'physical', 'anemo', 'geo', 'electro', 'hydro', 'pyro', 'cryo', 'cri_rate',
+        'cri_dmg', 'healing'
+    ]
 #     star = (0, 0, 18, 18)
 #     plus = (0, 138, 10, 148)
 #
@@ -40,15 +49,14 @@ import numpy as np
 #         (144, 41, 144+41, 41+39)  # percent
 #     ]
 #
-#     sub_stats_name = [
-#         'star', 'hp', 'cri_dmg', 'attack', 'defend', 'cri_rate', 'element', 'energy'
-#     ]
+
+
 
 
 load_img = cv2.imread('./data/stats_bw')
 load_img_gray = cv2.cvtColor(load_img, cv2.COLOR_BGR2GRAY)
 
-load_data = np.load('./data/data.v4.npy', allow_pickle=True)
+load_data = np.load('./data/data.v7.npy', allow_pickle=True)
 
 
 def get_data(set):

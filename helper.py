@@ -1,6 +1,7 @@
 import cv2
 from PIL import ImageGrab
 import win32gui
+import imutils
 
 
 def draw_rect_from_contours(image, contours, only=-1, smallest_size=(5, 5)):
@@ -57,6 +58,25 @@ def get_screen():
     img = ImageGrab.grab(bbox)
 
     return img
+
+
+# mode
+# 0 = BGR
+# 1 = gray
+# 2 = bw
+def find_morp_contours(image, mode=0, kernel=(1, 10), thresh=(150, 255)):
+    image_gray = image
+    image_bw = image
+    if mode == 0:
+        image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    if mode <= 1:
+        image_bw = cv2.threshold(image_gray, thresh[0], thresh[1], cv2.THRESH_BINARY)[1]
+    rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel)
+    image_morp = cv2.morphologyEx(image_bw, cv2.MORPH_CLOSE, rect_kernel)
+    image_cont = cv2.findContours(image_morp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    res_cont = imutils.grab_contours(image_cont)
+
+    return res_cont, image_gray, image_bw
 
 
 def cut_image_from_contours(image, contours, right_to_left=False):
