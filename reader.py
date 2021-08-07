@@ -14,8 +14,8 @@ def load_numpy():
         cv2.imshow(f'{i}', d)
 
 
-def load_dict():
-    load = np.load('./data/data.v7.npy', allow_pickle=True)
+def load_dict(target='./data/data.v10.npy'):
+    load = np.load(target, allow_pickle=True)
 
     dict = {}
     dict['sub_stat_img_set'] = load.item().get('sub_stat_img_set')
@@ -25,6 +25,7 @@ def load_dict():
     dict['plus'] = load.item().get('plus')
     dict['main_stat_img_set'] = load.item().get('main_stat_img_set')
     dict['main_stat_name'] = load.item().get('main_stat_name')
-
+    dict['artifact_set_img_set'] = load.item().get('artifact_set_img_set')
+    dict['artifact_set_name'] = load.item().get('artifact_set_name')
     return dict
 

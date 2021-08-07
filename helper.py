@@ -2,6 +2,7 @@ import cv2
 from PIL import ImageGrab
 import win32gui
 import imutils
+import data
 
 
 def draw_rect_from_contours(image, contours, only=-1, smallest_size=(5, 5)):
@@ -64,7 +65,7 @@ def get_screen():
 # 0 = BGR
 # 1 = gray
 # 2 = bw
-def find_morp_contours(image, mode=0, kernel=(1, 10), thresh=(150, 255)):
+def find_contours(image, mode=0, kernel=(1, 10), thresh=(150, 255)):
     image_gray = image
     image_bw = image
     if mode == 0:
@@ -99,4 +100,34 @@ def cut_image_from_contours(image, contours, right_to_left=False):
     for each_pos in pos:
         # print(each_pos)
         result.append(image[each_pos[1]:each_pos[1]+each_pos[3], each_pos[0]:each_pos[0]+each_pos[2]])
+    return result
+
+
+def match_image_with_set_and_name(image_array, set_img, set_name):
+    result = []
+    match_i = []
+    if len(image_array) > 0:
+        for each_image in image_array:
+            each_image_gray = cv2.cvtColor(each_image, cv2.COLOR_BGR2GRAY)
+            each_image_bw = cv2.threshold(each_image_gray, 180, 255, cv2.THRESH_BINARY)[1]
+            each_image_border = cv2.copyMakeBorder(each_image_bw, 10, 10, 50, 50, cv2.BORDER_CONSTANT,
+                                                   value=[0, 0, 0])
+            most_match = None
+            most_match_i = None
+            compare_img_set = data.get_data(set_img)
+            for o, each_compare_img_set in enumerate(compare_img_set):
+                for each_compare_img in each_compare_img_set:
+
+                    res = cv2.matchTemplate(each_image_border, each_compare_img, cv2.TM_CCOEFF_NORMED)
+                    max_res = cv2.minMaxLoc(res)[1]
+                    if most_match is None or max_res > most_match:
+                        most_match = max_res
+                        most_match_i = o
+
+            match_i.append(most_match_i)
+
+        # print each sub stat text
+        for each_i in match_i:
+            result.append(data.get_data(set_name)[each_i])
+
     return result

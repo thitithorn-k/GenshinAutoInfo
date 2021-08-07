@@ -106,20 +106,8 @@ def run(test=False):
     artifact_set = long_stats * green_mask
     # cv2.imshow('testing2', artifact_set)
 
-    # setup rect-angel kernel
-    rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 2))
-
-    # change artifact-set's name to black n white rectangle
-    green_mask_gray = cv2.cvtColor(artifact_set, cv2.COLOR_BGR2GRAY)
-    green_mask_bw = cv2.threshold(green_mask_gray, 0, 255, cv2.THRESH_BINARY)[1]
-    green_mask_bw_morph = cv2.morphologyEx(green_mask_bw, cv2.MORPH_CLOSE, rect_kernel)
-    green_mask_bw_thres = cv2.threshold(green_mask_bw_morph, 0, 255, cv2.THRESH_BINARY)[1]
-    # cv2.imshow('green_mask_bw_thres', green_mask_bw_thres)
-
-    # find location of artifact-set's name
-    green_mask_bw_thres_cnts = cv2.findContours(green_mask_bw_thres, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    green_mask_bw_thres_cnts = imutils.grab_contours(green_mask_bw_thres_cnts)
-    asn_pos = get_pos_from_contours(green_mask_bw_thres_cnts)  # artifact set name's position
+    green_mask_cont, _, _ = find_contours(artifact_set, 0, (15, 2), (0, 255))
+    asn_pos = get_pos_from_contours(green_mask_cont)  # artifact set name's position
 
     # cut needless part from 'long_stats'
     top_asn = len(asn_pos)-1
@@ -129,16 +117,7 @@ def run(test=False):
     asn_y = asn_pos[top_asn][1] + asn_pos[top_asn][3]
     status_crop = long_stats[0:asn_y, 0:230]
 
-    # change status_crop to black and white color
-    status_crop_gray = cv2.cvtColor(status_crop, cv2.COLOR_BGR2GRAY)
-    status_crop_bw = cv2.threshold(status_crop_gray, 190, 240, cv2.THRESH_BINARY)[1]
-    status_crop_morph = cv2.morphologyEx(status_crop_bw, cv2.MORPH_CLOSE, rect_kernel)
-    status_crop_thres = cv2.threshold(status_crop_morph, 0, 255, cv2.THRESH_BINARY)[1]
-    # cv2.imshow('status_crop_thres', status_crop_thres)
-
-    # find contours of status_crop_thres
-    all_cnts = cv2.findContours(status_crop_thres.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    all_cnts = imutils.grab_contours(all_cnts)
+    all_cnts, status_crop_gray, status_crop_bw = find_contours(status_crop, 0, (15, 2), (190, 255))
     all_stats_pos = get_pos_from_contours(all_cnts)
 
     # draw rect over contours of each stat
@@ -185,6 +164,10 @@ def run(test=False):
     main_stat_crop = long_stats[main_stat_pos[1]:main_stat_pos[1] + main_stat_pos[3], main_stat_pos[0]:main_stat_pos[0] + main_stat_pos[2]]
     # cv2.imshow('main_stat_crop', main_stat_crop)
 
+    artifact_part_pos = (first_star_pos[0], first_star_pos[1] - 64, 160, 22)
+    artifact_part_crop = long_stats[artifact_part_pos[1]:artifact_part_pos[1] + artifact_part_pos[3], artifact_part_pos[0]:artifact_part_pos[0] + artifact_part_pos[2]]
+    read_part(artifact_part_crop)
+
     find_star = draw_rect_from_pos(find_star, main_stat_pos)
 
     cv2.imshow(f'find_star', find_star)
@@ -194,7 +177,7 @@ def run(test=False):
     # return main_stat_crop
 
 
-    # ==========================================================================
+    #  ==========================================================================
 
     # split sub_stat_crop to name and value
     sub_stat_crop_name = []
@@ -204,8 +187,8 @@ def run(test=False):
         sub_stat_crop_name.append(name)
         sub_stat_crop_value.append(value)
 
-    sub_stat_name = read_sub_stat_name(sub_stat_crop_name)
-    sub_stat_value = read_stat_value(sub_stat_crop_value)
+    sub_stat_name = match_image_with_set_and_name(sub_stat_crop_name, 'sub_stat_img_set', 'sub_stat_name')
+    sub_stat_value = read_value(sub_stat_crop_value)
 
     if sub_stat_name:
         print('sub stat ==================================')
@@ -216,33 +199,39 @@ def run(test=False):
 
     print('===========================================')
 
-
-
     res = {}
     res['star'] = stars_n
 
 
+def read_part(part_img):
+    part_img_cont, _, _ = find_contours(part_img, 0, (10, 8))
+    part_img_cut = cut_image_from_contours(part_img, part_img_cont)
+    for i, cut in enumerate(part_img_cut):
+        cv2.imshow(f'part_cut_{i}', cut)
+
+
 def read_level(level_img):
-    level_img_cont, _, _ = find_morp_contours(level_img, 0, (2, 10))
-    cut_level = cut_image_from_contours(level_img, level_img_cont)
-    for i, cut in enumerate(cut_level):
-        cv2.imshow(f'{i}cut', cut)
+    level = read_value([level_img], True)[0][0]
+    if level > 100:
+        level %= 100
+    else:
+        level %= 10
+
+    if level < 0 or level > 20:
+        level = 0
+        print('failed to read artifact\'s level')
+    else:
+        print(f'level = {level}')
 
 
 def split_main_stat_name_and_value(main_stat_crop_img):
-    main_stat_crop_img_gray = cv2.cvtColor(main_stat_crop_img, cv2.COLOR_BGR2GRAY)
-    main_stat_crop_img_bw = cv2.threshold(main_stat_crop_img_gray, 200, 255, cv2.THRESH_BINARY)[1]
-
-    main_stat_rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 30))
-    main_stat_crop_img_morp = cv2.morphologyEx(main_stat_crop_img_bw, cv2.MORPH_CLOSE, main_stat_rect_kernel)
-    main_stat_crop_img_cont = cv2.findContours(main_stat_crop_img_morp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    main_stat_crop_img_cont = imutils.grab_contours(main_stat_crop_img_cont)
-
+    main_stat_crop_img_cont, _, _ = find_contours(main_stat_crop_img, 0, (10, 30), (200, 255))
     cut_main_stat = cut_image_from_contours(main_stat_crop_img, main_stat_crop_img_cont, True)
     for i, each_cut in enumerate(cut_main_stat):
         cv2.imshow(f'{i}cut_main', each_cut)
-    print(read_stat_value([cut_main_stat[0]]), False)
-    read_main_stat_name(cut_main_stat[1])
+    print(read_value([cut_main_stat[0]]))
+    print(match_image_with_set_and_name([cut_main_stat[1]], 'main_stat_img_set', 'main_stat_name')[0])
+    # read_main_stat_name(cut_main_stat[1])
 
 
 # split full sub stat crop to it's name and value
@@ -258,64 +247,9 @@ def split_sub_stat_name_and_value(sub_stat_crop_img):
     return sub_stat_crop_img[0:h, 0:max_match_pos[0]], sub_stat_crop_img[0:h, max_match_pos[0]+10:w]
 
 
-def read_main_stat_name(main_stat_name_img):
-    main_stat_name_img_gray = cv2.cvtColor(main_stat_name_img, cv2.COLOR_BGR2GRAY)
-    main_stat_name_img_gray_border = cv2.copyMakeBorder(main_stat_name_img_gray, 10, 10, 50, 50, cv2.BORDER_CONSTANT,
-                                                       value=[0, 0, 0])
-    main_stat_name_img_gray_border_bw = cv2.threshold(main_stat_name_img_gray_border, 180, 255, cv2.THRESH_BINARY)[1]
-    cv2.imshow('main_border_bw', main_stat_name_img_gray_border_bw)
-    most_match = None
-    most_match_i = None
-    main_stat_img_set = get_data('main_stat_img_set')
-    for o, each_stat_set in enumerate(main_stat_img_set):
-        for each_stat_img in each_stat_set:
-            cv2.imshow('each_main_stat', each_stat_img)
-            res = cv2.matchTemplate(main_stat_name_img_gray_border_bw, each_stat_img, cv2.TM_CCOEFF_NORMED)
-            max_res = cv2.minMaxLoc(res)[1]
-            if most_match is None or max_res > most_match:
-                most_match = max_res
-                most_match_i = o
-    print(get_data('main_stat_name')[most_match_i])
-    return most_match_i
-
-
-# read text of the array of sub stat_crop_name's image
-# return array[name_of_stat:String]
-def read_sub_stat_name(sub_stat_name_img):
-    result = []
-    sub_stat_i = []
-    if len(sub_stat_name_img) > 0:
-        for each_sub_stat_name in sub_stat_name_img:
-            each_sub_stat_name_gray = cv2.cvtColor(each_sub_stat_name, cv2.COLOR_BGR2GRAY)
-
-            o = 0
-            most_match = None
-            most_match_i = None
-            sub_stat_img_set = get_data('sub_stat_img_set')
-            for o, each_stat_set in enumerate(sub_stat_img_set):
-                for each_stat_img in each_stat_set:
-                    compare_stat_gray = each_stat_img
-                    each_sub_stat_name_bw = cv2.threshold(each_sub_stat_name_gray, 180, 255, cv2.THRESH_BINARY)[1]
-                    each_sub_stat_name_bw = cv2.copyMakeBorder(each_sub_stat_name_bw, 10, 10, 50, 50, cv2.BORDER_CONSTANT,
-                                                               value=[0, 0, 0])
-                    res = cv2.matchTemplate(each_sub_stat_name_bw, compare_stat_gray, cv2.TM_CCOEFF_NORMED)
-                    max_res = cv2.minMaxLoc(res)[1]
-                    if most_match is None or max_res > most_match:
-                        most_match = max_res
-                        most_match_i = o
-
-            sub_stat_i.append(most_match_i)
-
-        # print each sub stat text
-        for each in sub_stat_i:
-            result.append(get_data('sub_stat_name')[each])
-
-    return result
-
-
 # read number of the array of sub_stat_crop_value's image
 # return array[value_of_stat:int, is it percent: bool]
-def read_stat_value(stat_value, adaptive_color=True):
+def read_value(stat_value, adaptive_color=True):
     if len(stat_value) <= 0:
         return
     result = []
@@ -343,21 +277,22 @@ def read_stat_value(stat_value, adaptive_color=True):
             else:
                 adaptive = 145
         else:
-            adaptive = 255
+            adaptive = 230
 
-        stat_value_img_gray = cv2.cvtColor(stat_value_img, cv2.COLOR_BGR2GRAY)
-        sub_stat_value_img_bw = cv2.threshold(stat_value_img_gray, adaptive, 255, cv2.THRESH_TOZERO)[1]
-        # cv2.imshow(f'{a}testaaa', sub_stat_value_img_bw)
-        stat_value_img_bw_for_match = cv2.threshold(stat_value_img_gray, adaptive, 255, cv2.THRESH_BINARY)[1]
+        # stat_value_img_gray = cv2.cvtColor(stat_value_img, cv2.COLOR_BGR2GRAY)
+        # sub_stat_value_img_bw = cv2.threshold(stat_value_img_gray, adaptive, 255, cv2.THRESH_TOZERO)[1]
+        # # cv2.imshow(f'{a}testaaa', sub_stat_value_img_bw)
+        # stat_value_img_bw_for_match = cv2.threshold(stat_value_img_gray, adaptive, 255, cv2.THRESH_BINARY)[1]
+        #
+        # rect_num_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 60))
+        # stat_value_img_morp = cv2.morphologyEx(stat_value_img_bw_for_match, cv2.MORPH_CLOSE, rect_num_kernel)
+        # # cv2.imshow(f'{a}testabbbaa', sub_stat_value_img_morp)
+        #
+        # stat_value_cont = cv2.findContours(stat_value_img_morp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        # stat_value_cont = imutils.grab_contours(stat_value_cont)
 
-        rect_num_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 60))
-        stat_value_img_morp = cv2.morphologyEx(stat_value_img_bw_for_match, cv2.MORPH_CLOSE, rect_num_kernel)
-        # cv2.imshow(f'{a}testabbbaa', sub_stat_value_img_morp)
-
-        stat_value_cont = cv2.findContours(stat_value_img_morp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        stat_value_cont = imutils.grab_contours(stat_value_cont)
-
-        cut_num = cut_image_from_contours(stat_value_img_bw_for_match, stat_value_cont, True)
+        stat_value_cont, _, stat_value_img_bw = find_contours(stat_value_img, 0, (1, 60), (adaptive, 255))
+        cut_num = cut_image_from_contours(stat_value_img_bw, stat_value_cont, True)
 
         dataset_num = []
         dataset_number = get_data('number')
@@ -415,7 +350,7 @@ def read_stat_value(stat_value, adaptive_color=True):
                     # cv2.imshow(f'num-{i}-{most_match_i}', get_gray_image(Data.number_pos[most_match_i]))
 
                     # if 2 number is in the same image. this will help to split it and fix the value
-                    if each_cut_num.shape[1] > 120:
+                    if each_cut_num.shape[1] > 110:
                         if most_match_loc[0][2][0] < most_match_loc[1][2][0]:
                             most_match_i = most_match_i[::-1]
                             value += most_match_i[1] * (10**(i-percent-decimal-error+cut_error))

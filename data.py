@@ -51,12 +51,10 @@ class Data:
 #
 
 
-
-
 load_img = cv2.imread('./data/stats_bw')
 load_img_gray = cv2.cvtColor(load_img, cv2.COLOR_BGR2GRAY)
 
-load_data = np.load('./data/data.v7.npy', allow_pickle=True)
+load_data = np.load('./data/data.v1.npy', allow_pickle=True)
 
 
 def get_data(set):
