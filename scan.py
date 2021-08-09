@@ -3,7 +3,7 @@ import imutils
 import random
 
 from data import get_data
-from helper import *
+from image_helper import *
 
 from data import *
 
@@ -61,7 +61,10 @@ def run(test=False):
         img = cv2.imread(img_name)
         print(f'random={img_random}')
     else:
-        img = np.array(get_screen())
+        screen = get_screen()
+        if type(screen) is int:
+            return -5
+        img = np.array(screen)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     # resize and cut the image long enough to see all stats
@@ -91,12 +94,15 @@ def run(test=False):
     for pt in zip(*loc[::-1]):
         if mask[pt[1] + int(round(h / 2)), pt[0] + int(round(w / 2))] != 255:
             mask[pt[1]:pt[1] + h, pt[0]:pt[0] + w] = 255
-            cv2.rectangle(find_star, pt, (pt[0] + w, pt[1] + h), (0, 0, 255), 1)
+            # cv2.rectangle(find_star, pt, (pt[0] + w, pt[1] + h), (0, 0, 255), 1)
             i += 1
             if first_star_pos is None or pt[0] < first_star_pos[0]:
                 first_star_pos = pt
     stars_n = i
-    print('stars = ', stars_n)
+    if stars_n < 2 or stars_n > 5:
+        print('star(s) not found')
+        return -1
+    # print('stars = ', stars_n)
 
     # find lime color in image that refer to the artifact set's name ################################
     green_lower = np.array([0, 210, 0], np.uint8)
@@ -113,7 +119,7 @@ def run(test=False):
     top_asn = len(asn_pos)-1
     if top_asn < 0:  # exit if artifact-set's name is not found
         print('artifact-set\'s name not found')
-        return
+        return -2
     asn_y = asn_pos[top_asn][1] + asn_pos[top_asn][3]
     status_crop = long_stats[0:asn_y, 0:230]
 
@@ -121,8 +127,8 @@ def run(test=False):
     all_stats_pos = get_pos_from_contours(all_cnts)
 
     # draw rect over contours of each stat
-    status_crop_rect, _ = draw_rect_from_contours(status_crop, all_cnts)
-    cv2.imshow(f'status_crop_rect', status_crop_rect) # Show color+rect
+    # status_crop_rect, _ = draw_rect_from_contours(status_crop, all_cnts)
+    # cv2.imshow(f'status_crop_rect', status_crop_rect) # Show color+rect
 
     # count sub stats by high from star_img_gray to the end of picture
     star_to_end = asn_y - first_star_pos[1]
@@ -138,21 +144,21 @@ def run(test=False):
     elif star_to_end < 180:
         sub_stats_n = 4
     else:
-        print('too long sub stats, something went wrong.')
-        return
+        print('Too much sub stats, something went wrong.')
+        return -3
 
     # find level position
     level_pos = (first_star_pos[0]+5, first_star_pos[1]+30, 32, 18)
     level_img = find_star[level_pos[1]:level_pos[1]+level_pos[3], level_pos[0]:level_pos[0]+level_pos[2]]
-    cv2.imshow('level', level_img)
-    read_level(level_img)
+    # cv2.imshow('level', level_img)
+    level = read_level(level_img)
 
     # split all position of each stats to var
     sub_stat_pos = []
     sub_stat_crop = []
     for i in range(sub_stats_n):
         sub_stat_pos.append(all_stats_pos[i + 1])
-        find_star = draw_rect_from_pos(find_star, sub_stat_pos[i])
+        # find_star = draw_rect_from_pos(find_star, sub_stat_pos[i])
         sub_stat_crop.append(long_stats[sub_stat_pos[i][1]:sub_stat_pos[i][1]+sub_stat_pos[i][3], sub_stat_pos[i][0]:sub_stat_pos[i][0]+sub_stat_pos[i][2]])
         # cv2.imshow(f'sub_stat_crop_{i}', sub_stat_crop[i])
 
@@ -166,18 +172,19 @@ def run(test=False):
 
     artifact_part_pos = (first_star_pos[0], first_star_pos[1] - 64, 160, 22)
     artifact_part_crop = long_stats[artifact_part_pos[1]:artifact_part_pos[1] + artifact_part_pos[3], artifact_part_pos[0]:artifact_part_pos[0] + artifact_part_pos[2]]
-    read_part(artifact_part_crop)
+    part_name, part_name_img_bw = read_part(artifact_part_crop)
 
-    find_star = draw_rect_from_pos(find_star, main_stat_pos)
+    # find_star = draw_rect_from_pos(find_star, main_stat_pos)
+    # cv2.imshow(f'find_star', find_star)
 
-    cv2.imshow(f'find_star', find_star)
-
-    split_main_stat_name_and_value(main_stat_crop)
-
-    # return main_stat_crop
-
-
-    #  ==========================================================================
+    main_stat_crop_name, main_stat_crop_value = split_main_stat_name_and_value(main_stat_crop)
+    if type(main_stat_crop_name) is int and main_stat_crop_value == -1:
+        print('Main stat not found')
+        return -4
+    main_stat_name, main_stat_name_img_bw = match_image_with_set_and_name([main_stat_crop_name], 'main_stat_img_set', 'main_stat_name')
+    main_stat_name = main_stat_name[0]
+    main_stat_name_img_bw = main_stat_name_img_bw[0]
+    main_stat_value = read_value([main_stat_crop_value])
 
     # split sub_stat_crop to name and value
     sub_stat_crop_name = []
@@ -187,54 +194,66 @@ def run(test=False):
         sub_stat_crop_name.append(name)
         sub_stat_crop_value.append(value)
 
-    sub_stat_name = match_image_with_set_and_name(sub_stat_crop_name, 'sub_stat_img_set', 'sub_stat_name')
+    sub_stat_name, sub_stat_name_img_bw = match_image_with_set_and_name(sub_stat_crop_name, 'sub_stat_img_set', 'sub_stat_name')
     sub_stat_value = read_value(sub_stat_crop_value)
 
-    if sub_stat_name:
-        print('sub stat ==================================')
-        for i, each_sub in enumerate(sub_stat_name):
-            print(each_sub, '+', sub_stat_value[i][0], '%' if sub_stat_value[i][1] else '')
-    else:
-        print('This artifact doesn\'t have sub stats')
-
-    print('===========================================')
-
+    # add all info to dictionary and return
     res = {}
+    res['artifact_status_img'] = status_crop
     res['star'] = stars_n
+    res['level'] = level
+    res['part_name'] = part_name
+    res['part_name_img_bw'] = part_name_img_bw
+    res['main_stat_name'] = main_stat_name
+    res['main_stat_value'] = main_stat_value[0]
+    res['main_stat_name_img_bw'] = main_stat_name_img_bw
+    res['sub_stat_name'] = sub_stat_name
+    res['sub_stat_value'] = sub_stat_value
+    res['sub_stat_name_img_bw'] = sub_stat_name_img_bw
 
+    return res
 
+# read name of part of artifact
+# return part name, bw_img of part
 def read_part(part_img):
     part_img_cont, _, _ = find_contours(part_img, 0, (10, 8))
     part_img_cut = cut_image_from_contours(part_img, part_img_cont)
-    for i, cut in enumerate(part_img_cut):
-        cv2.imshow(f'part_cut_{i}', cut)
+    largest = 0
+    if len(part_img_cut) > 1:
+        for i, each_part_img_cut in part_img_cut:
+            if each_part_img_cut.shape[0] > part_img_cut[largest].shape[0]:
+                largest = i
+    part_img_cut = part_img_cut[largest]
+    # cv2.imshow(f'part_cut', part_img_cut)
+    part_name, part_img_bw = match_image_with_set_and_name([part_img_cut], 'part_img_set', 'part_name')
+    return part_name[0], part_img_bw[0]
 
-
+# read level of artifact
+# return int
 def read_level(level_img):
     level = read_value([level_img], True)[0][0]
     if level > 100:
         level %= 100
     else:
         level %= 10
-
     if level < 0 or level > 20:
         level = 0
-        print('failed to read artifact\'s level')
-    else:
-        print(f'level = {level}')
+    level = int(level)
+    return level
 
-
+# split full main stat crop to its name abd value img
+# return main_stat_name_img, main_stat_value_img
 def split_main_stat_name_and_value(main_stat_crop_img):
     main_stat_crop_img_cont, _, _ = find_contours(main_stat_crop_img, 0, (10, 30), (200, 255))
     cut_main_stat = cut_image_from_contours(main_stat_crop_img, main_stat_crop_img_cont, True)
-    for i, each_cut in enumerate(cut_main_stat):
-        cv2.imshow(f'{i}cut_main', each_cut)
-    print(read_value([cut_main_stat[0]]))
-    print(match_image_with_set_and_name([cut_main_stat[1]], 'main_stat_img_set', 'main_stat_name')[0])
-    # read_main_stat_name(cut_main_stat[1])
+    if len(cut_main_stat) != 2:
+        return -1, -1
+    # for i, each_cut in enumerate(cut_main_stat):
+    #     cv2.imshow(f'{i}cut_main', each_cut)
+    return cut_main_stat[1], cut_main_stat[0]
 
 
-# split full sub stat crop to it's name and value
+# split full sub stat crop to its name and value img
 # return [name:Image, value:Image]
 def split_sub_stat_name_and_value(sub_stat_crop_img):
     plus_img_gray = get_data('plus')
@@ -278,18 +297,6 @@ def read_value(stat_value, adaptive_color=True):
                 adaptive = 145
         else:
             adaptive = 230
-
-        # stat_value_img_gray = cv2.cvtColor(stat_value_img, cv2.COLOR_BGR2GRAY)
-        # sub_stat_value_img_bw = cv2.threshold(stat_value_img_gray, adaptive, 255, cv2.THRESH_TOZERO)[1]
-        # # cv2.imshow(f'{a}testaaa', sub_stat_value_img_bw)
-        # stat_value_img_bw_for_match = cv2.threshold(stat_value_img_gray, adaptive, 255, cv2.THRESH_BINARY)[1]
-        #
-        # rect_num_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 60))
-        # stat_value_img_morp = cv2.morphologyEx(stat_value_img_bw_for_match, cv2.MORPH_CLOSE, rect_num_kernel)
-        # # cv2.imshow(f'{a}testabbbaa', sub_stat_value_img_morp)
-        #
-        # stat_value_cont = cv2.findContours(stat_value_img_morp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        # stat_value_cont = imutils.grab_contours(stat_value_cont)
 
         stat_value_cont, _, stat_value_img_bw = find_contours(stat_value_img, 0, (1, 60), (adaptive, 255))
         cut_num = cut_image_from_contours(stat_value_img_bw, stat_value_cont, True)

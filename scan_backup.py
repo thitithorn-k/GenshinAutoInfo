@@ -3,7 +3,7 @@ import imutils
 import random
 
 import data
-from helper import *
+from image_helper import *
 
 from data import *
 

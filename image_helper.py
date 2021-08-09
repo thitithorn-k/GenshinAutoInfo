@@ -3,6 +3,7 @@ from PIL import ImageGrab
 import win32gui
 import imutils
 import data
+from time import sleep
 
 
 def draw_rect_from_contours(image, contours, only=-1, smallest_size=(5, 5)):
@@ -49,13 +50,14 @@ def get_screen():
 
     genshin = [(hwnd, title) for hwnd, title in winlist if ('genshin impact' or '原神') in title.lower()]
     if not genshin:
-        print('not found genshin\'s window')
-        return
+        print('genshin\'s window not found')
+        return -1
 
     hwnd = genshin[0]
 
-    win32gui.SetForegroundWindow(hwnd)
-    bbox = win32gui.GetWindowRect(hwnd)
+    win32gui.SetForegroundWindow(hwnd[0])
+    sleep(.05)
+    bbox = win32gui.GetWindowRect(hwnd[0])
     img = ImageGrab.grab(bbox)
 
     return img
@@ -106,10 +108,12 @@ def cut_image_from_contours(image, contours, right_to_left=False):
 def match_image_with_set_and_name(image_array, set_img, set_name):
     result = []
     match_i = []
+    image_bw = []
     if len(image_array) > 0:
         for each_image in image_array:
             each_image_gray = cv2.cvtColor(each_image, cv2.COLOR_BGR2GRAY)
             each_image_bw = cv2.threshold(each_image_gray, 180, 255, cv2.THRESH_BINARY)[1]
+            image_bw.append(each_image_bw)
             each_image_border = cv2.copyMakeBorder(each_image_bw, 10, 10, 50, 50, cv2.BORDER_CONSTANT,
                                                    value=[0, 0, 0])
             most_match = None
@@ -130,4 +134,4 @@ def match_image_with_set_and_name(image_array, set_img, set_name):
         for each_i in match_i:
             result.append(data.get_data(set_name)[each_i])
 
-    return result
+    return result, image_bw
