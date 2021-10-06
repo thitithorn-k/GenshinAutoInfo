@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 import reader
 
-class Data:
 
+class Data:
     sub_stats_name = [
         'star', 'hp', 'cri_dmg', 'attack', 'defend', 'cri_rate', 'element', 'energy'
     ]
@@ -51,9 +51,6 @@ class Data:
 #
 
 
-load_img = cv2.imread('./data/stats_bw')
-load_img_gray = cv2.cvtColor(load_img, cv2.COLOR_BGR2GRAY)
-
 load_data = np.load('./data/data.npy', allow_pickle=True)
 
 
@@ -67,6 +64,9 @@ def add_img_to_set(image, img_set, list_of_name, name):
     i = load[list_of_name].index(name)
     load[img_set][i].append(image)
     np.save('./data/data.npy', load)
+
+    global load_data
+    load_data = np.load('./data/data.npy', allow_pickle=True)
 
 
 def has_percent(stat_name):
@@ -115,6 +115,7 @@ class Translate:
         'sub_stat': 'Sub stat(s)',
         'star': 'Star(s)',
         'level': 'Level',
+        'artifact_set': 'Artifact set',
         'add_confirm_caution': 'Add the following image to the dataset to improve the performance of your program',
         'yes': 'Yes',
         'no': 'No',
@@ -147,6 +148,7 @@ class Translate:
         'sub_stat': 'Sub stat(s)',
         'star': 'จำนวนดาว',
         'level': 'Level',
+        'artifact_set': 'Artifact set',
         'add_confirm_caution': 'เพิ่มรูปภาพต่อไปนี้ลงในฐานข้อมูล\nเพื่อปรับปรุงคุณภาพของโปรแกรมของคุณให้ดียิ่งขึ้น',
         'yes': 'ใช่',
         'no': 'ไม่ใช่',
@@ -154,9 +156,13 @@ class Translate:
         'add_confirm_question_end': 'ฉันสามารถอ่านมันได้อย่างง่ายดาย\nและไม่มีจุดสีขาวปะปนอยู่ในภาพ'
     }
 
+
 language = 1
 
+
 def get_text(text):
+    if text not in Translate.en:
+        return text
     if language == 0:
         return Translate.en[text]
     elif language == 1:

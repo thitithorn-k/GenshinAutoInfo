@@ -4,6 +4,7 @@ import win32gui
 import imutils
 import data
 from time import sleep
+import numpy as np
 
 
 def draw_rect_from_contours(image, contours, only=-1, smallest_size=(5, 5)):
@@ -26,7 +27,7 @@ def draw_rect_from_contours(image, contours, only=-1, smallest_size=(5, 5)):
 
 def draw_rect_from_pos(image, pos):
     new_image = image
-    cv2.rectangle(new_image, (pos[0]-1, pos[1]-3),(pos[0] + pos[2] + 2, pos[1] + pos[3] + 2), (0, 0, 255), 1)
+    cv2.rectangle(new_image, (pos[0]-1, pos[1]-3), (pos[0] + pos[2] + 2, pos[1] + pos[3] + 2), (0, 0, 255), 1)
     return new_image
 
 
@@ -105,23 +106,42 @@ def cut_image_from_contours(image, contours, right_to_left=False):
     return result
 
 
-def match_image_with_set_and_name(image_array, set_img, set_name):
+def match_image_with_set_and_name(image_array, set_img, set_name, threshold=-1):
     result = []
     match_i = []
     image_bw = []
     if len(image_array) > 0:
         for each_image in image_array:
+            if threshold == -1:
+                mean = cv2.mean(each_image)
+                mean = np.mean(mean)
+                if mean > 123:
+                    threshold = 180
+                elif mean > 120:
+                    threshold = 170
+                elif mean > 110:
+                    threshold = 165
+                elif mean > 107:
+                    threshold = 160
+                elif mean > 102:
+                    threshold = 150
+                elif mean > 97:
+                    threshold = 145
+                else:
+                    threshold = 145
+
             each_image_gray = cv2.cvtColor(each_image, cv2.COLOR_BGR2GRAY)
-            each_image_bw = cv2.threshold(each_image_gray, 180, 255, cv2.THRESH_BINARY)[1]
+            each_image_bw = cv2.threshold(each_image_gray, threshold, 255, cv2.THRESH_BINARY)[1]
             image_bw.append(each_image_bw)
-            each_image_border = cv2.copyMakeBorder(each_image_bw, 10, 10, 50, 50, cv2.BORDER_CONSTANT,
+            each_image_border = cv2.copyMakeBorder(each_image_bw, 10, 10, 100, 100, cv2.BORDER_CONSTANT,
                                                    value=[0, 0, 0])
             most_match = None
             most_match_i = None
             compare_img_set = data.get_data(set_img)
             for o, each_compare_img_set in enumerate(compare_img_set):
                 for each_compare_img in each_compare_img_set:
-
+                    if each_compare_img is None:
+                        continue
                     res = cv2.matchTemplate(each_image_border, each_compare_img, cv2.TM_CCOEFF_NORMED)
                     max_res = cv2.minMaxLoc(res)[1]
                     if most_match is None or max_res > most_match:
@@ -132,6 +152,8 @@ def match_image_with_set_and_name(image_array, set_img, set_name):
 
         # print each sub stat text
         for each_i in match_i:
+            if each_i is None:
+                each_i = 0
             result.append(data.get_data(set_name)[each_i])
 
     return result, image_bw

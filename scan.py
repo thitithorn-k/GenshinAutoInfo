@@ -56,7 +56,7 @@ def run(test=False):
     img = None
     if test:
         img_random = random.randint(1, 19)
-        # img_random = 16
+        # img_random = 5
         img_name = f'./testim/test-full{img_random}.png'
         img = cv2.imread(img_name)
         print(f'random={img_random}')
@@ -99,7 +99,7 @@ def run(test=False):
             if first_star_pos is None or pt[0] < first_star_pos[0]:
                 first_star_pos = pt
     stars_n = i
-    if stars_n < 2 or stars_n > 5:
+    if stars_n < 1 or stars_n > 5:
         print('star(s) not found')
         return -1
     # print('stars = ', stars_n)
@@ -125,6 +125,12 @@ def run(test=False):
 
     all_cnts, status_crop_gray, status_crop_bw = find_contours(status_crop, 0, (15, 2), (190, 255))
     all_stats_pos = get_pos_from_contours(all_cnts)
+
+    asn_img = [cut_image_from_contours(artifact_set, green_mask_cont)[0]]
+    asn_img = [artifact_set[asn_y-20:asn_y, asn_pos[top_asn][0]:asn_pos[top_asn][0]+asn_pos[top_asn][2]]]
+    asn_name, asn_img_bw = match_image_with_set_and_name(asn_img, 'artifact_set_img_set', 'artifact_set_name', 50)
+    asn_name = asn_name[0]
+    asn_img_bw = asn_img_bw[0]
 
     # draw rect over contours of each stat
     # status_crop_rect, _ = draw_rect_from_contours(status_crop, all_cnts)
@@ -197,6 +203,8 @@ def run(test=False):
     sub_stat_name, sub_stat_name_img_bw = match_image_with_set_and_name(sub_stat_crop_name, 'sub_stat_img_set', 'sub_stat_name')
     sub_stat_value = read_value(sub_stat_crop_value)
 
+
+
     # add all info to dictionary and return
     res = {}
     res['artifact_status_img'] = status_crop
@@ -210,8 +218,11 @@ def run(test=False):
     res['sub_stat_name'] = sub_stat_name
     res['sub_stat_value'] = sub_stat_value
     res['sub_stat_name_img_bw'] = sub_stat_name_img_bw
+    res['asn_name'] = asn_name
+    res['asn_img_bw'] = asn_img_bw
 
     return res
+
 
 # read name of part of artifact
 # return part name, bw_img of part
@@ -228,17 +239,22 @@ def read_part(part_img):
     part_name, part_img_bw = match_image_with_set_and_name([part_img_cut], 'part_img_set', 'part_name')
     return part_name[0], part_img_bw[0]
 
+
 # read level of artifact
 # return int
 def read_level(level_img):
-    level = read_value([level_img], True)[0][0]
-    if level > 100:
-        level %= 100
-    else:
-        level %= 10
-    if level < 0 or level > 20:
-        level = 0
+    # cv2.imshow('test', level_img)
+    level_img_cont, _, _ = find_contours(level_img, 0, (5, 7))
+    level_img_cut = cut_image_from_contours(level_img, level_img_cont, True)
+    level_img_cut = level_img_cut[0]
+    level_img_cut = level_img_cut[0:level_img_cut.shape[0], 10:level_img_cut.shape[1]]
+    # cv2.imshow('test2', level_img_cut)
+    level = read_value([level_img_cut], True)[0][0]
+    # print(level)
     level = int(level)
+    if level < 0 or level > 20:
+        print(f'level error: level={level}')
+        level = 0
     return level
 
 # split full main stat crop to its name abd value img
@@ -268,7 +284,7 @@ def split_sub_stat_name_and_value(sub_stat_crop_img):
 
 # read number of the array of sub_stat_crop_value's image
 # return array[value_of_stat:int, is it percent: bool]
-def read_value(stat_value, adaptive_color=True):
+def read_value(stat_value, adaptive_color=True, debug=False):
     if len(stat_value) <= 0:
         return
     result = []
@@ -314,13 +330,17 @@ def read_value(stat_value, adaptive_color=True):
         cut_error = 0
 
         for i, each_cut_num in enumerate(cut_num):
-            each_cut_num_cont = cv2.findContours(each_cut_num, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-            each_cut_num_cont = imutils.grab_contours(each_cut_num_cont)
+            # cv2.imshow(f'test{i}', each_cut_num)
+            each_cut_num_cont, _, _ = find_contours(each_cut_num, 2, (2, 10), (255, 255))
+            # each_cut_num_cont = cv2.findContours(each_cut_num, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            # each_cut_num_cont = imutils.grab_contours(each_cut_num_cont)
             each_cut_num_no_outer = cut_image_from_contours(each_cut_num, each_cut_num_cont)
             each_cut_num = None
             for each_no_outer in each_cut_num_no_outer:
                 if each_cut_num is None or each_cut_num.shape[0] < each_no_outer.shape[0]:
                     each_cut_num = each_no_outer
+            if debug:
+                cv2.imshow(f'test{i}', each_cut_num)
 
             if each_cut_num.shape[0] < 45 and each_cut_num.shape[1] < 45:  # if it's 'dot'
                 if decimal == 0 and i != 0 and i-percent < 3:
@@ -354,20 +374,20 @@ def read_value(stat_value, adaptive_color=True):
                             most_match[0] = max_res
                             most_match_i[0] = j
                             most_match_loc[0] = cv2.minMaxLoc(res)
-                    # cv2.imshow(f'num-{i}-{most_match_i}', get_gray_image(Data.number_pos[most_match_i]))
 
                     # if 2 number is in the same image. this will help to split it and fix the value
-                    if each_cut_num.shape[1] > 110:
-                        if most_match_loc[0][2][0] < most_match_loc[1][2][0]:
-                            most_match_i = most_match_i[::-1]
-                            value += most_match_i[1] * (10**(i-percent-decimal-error+cut_error))
-                            cut_error += 1
-
-                    if most_match_i[0] == 10:
+                    if most_match_i[0] == 10 and percent <= 0 and i == 0:
                         percent = 1
                         value = 0
+                    elif each_cut_num.shape[1] > 110:
+                        if most_match_loc[0][2][0] < most_match_loc[1][2][0]:
+                            most_match_i = most_match_i[::-1]
+                        value += most_match_i[1] * (10**(i-percent-decimal-error+cut_error))
+                        cut_error += 1
+                        value += most_match_i[0] * (10**(i-percent-decimal-error+cut_error))
                     else:
                         value += most_match_i[0] * (10**(i-percent-decimal-error+cut_error))
+
         # print(value, '%' if percent else '')
         result.append([value, True if percent else False])
     return result
