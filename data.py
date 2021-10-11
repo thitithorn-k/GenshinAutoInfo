@@ -3,15 +3,15 @@ import numpy as np
 import reader
 
 
-class Data:
-    sub_stats_name = [
-        'star', 'hp', 'cri_dmg', 'attack', 'defend', 'cri_rate', 'element', 'energy'
-    ]
-
-    main_stats_name = [
-        'hp', 'attack', 'element', 'energy', 'physical', 'anemo', 'geo', 'electro', 'hydro', 'pyro', 'cryo', 'cri_rate',
-        'cri_dmg', 'healing'
-    ]
+# class Data:
+#     sub_stats_name = [
+#         'star', 'hp', 'cri_dmg', 'attack', 'defend', 'cri_rate', 'element', 'energy'
+#     ]
+#
+#     main_stats_name = [
+#         'hp', 'attack', 'element', 'energy', 'physical', 'anemo', 'geo', 'electro', 'hydro', 'pyro', 'cryo', 'cri_rate',
+#         'cri_dmg', 'healing'
+#     ]
 #     star = (0, 0, 18, 18)
 #     plus = (0, 138, 10, 148)
 #
@@ -166,4 +166,11 @@ def get_text(text):
     if language == 0:
         return Translate.en[text]
     elif language == 1:
-        return  Translate.th[text]
+        return Translate.th[text]
+
+
+def get_keys(text):
+    if language == 0:
+        return list(Translate.en.keys())[list(Translate.en.values()).index(text)]
+    elif language == 1:
+        return list(Translate.th.keys())[list(Translate.th.values()).index(text)]
