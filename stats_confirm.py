@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 import data
 from data import get_text
+from data import get_keys
 
 confirm_window_main = []
 
@@ -46,16 +47,16 @@ def artifact_confirm(atf_data, alpha):
         if part_name_var.get() != atf_data['part_name']:
             add_to_data(atf_data['part_name_img_bw'], 'part_img_set', 'part_name', part_name_var.get())
 
-        if main_stat_name_var.get() != atf_data['main_stat_name']:
-            add_to_data(atf_data['main_stat_name_img_bw'], 'main_stat_img_set', 'main_stat_name', main_stat_name_var.get())
+        if get_keys(main_stat_name_var.get()) != atf_data['main_stat_name']:
+            add_to_data(atf_data['main_stat_name_img_bw'], 'main_stat_img_set', 'main_stat_name', get_keys(main_stat_name_var.get()))
 
         if star_var.get() != atf_data['star']:
             pass
         if level_var.get() != atf_data['level']:
             pass
         for i, each_sub in enumerate(atf_data['sub_stat_name']):
-            if sub_stat_name_var[i].get() != each_sub:
-                add_to_data(atf_data['sub_stat_name_img_bw'][i], 'sub_stat_img_set', 'sub_stat_name', sub_stat_name_var[i].get())
+            if get_keys(sub_stat_name_var[i].get()) != each_sub:
+                add_to_data(atf_data['sub_stat_name_img_bw'][i], 'sub_stat_img_set', 'sub_stat_name', get_keys(sub_stat_name_var[i].get()))
         if asn_var.get() != atf_data['asn_name']:
             add_to_data(atf_data['asn_img_bw'], 'artifact_set_img_set', 'artifact_set_name', asn_var.get())
 
@@ -63,7 +64,7 @@ def artifact_confirm(atf_data, alpha):
         atf_data['star'] = star_var.get()
         atf_data['level'] = level_var.get()
         atf_data['part_name'] = part_name_var.get()
-        atf_data['main_stat_name'] = main_stat_name_var.get()
+        atf_data['main_stat_name'] = get_keys(main_stat_name_var.get())
         atf_data['main_stat_value'][0] = float(main_stat_value_text.get('1.0', 'end-1c'))
         atf_data['main_stat_value'][1] = main_stat_value_percent_choices.index(main_stat_value_percent_var.get())
         for i, each_sub in enumerate(atf_data['sub_stat_name']):
@@ -133,7 +134,7 @@ def artifact_confirm(atf_data, alpha):
 
     confirm_window = App()
     confirm_window.title('Artifact status confirmation')
-    confirm_window.geometry(f'600x{image_h+110}')
+    confirm_window.geometry(f'650x{image_h+110}')
     confirm_window.configure(bg=bg_color)
     s = ttk.Style()
     s.theme_use('winnative')
@@ -168,6 +169,13 @@ def artifact_confirm(atf_data, alpha):
     part_label.configure(text='Gear part: ')
     set_color(part_label)
 
+    c1x = 330
+    c1w = 150
+    c2x = c1x + c1w + 6
+    c2w = 50
+    c3x = c2x + c2w + 6
+    c3w = 80
+
     part_x = 330
     part_choices = data.get_data('part_name')
     part_name = atf_data['part_name']
@@ -175,7 +183,7 @@ def artifact_confirm(atf_data, alpha):
     part_name_var.set(part_name)
     # part_dropdown = tk.OptionMenu(confirm_window, part_name_var, *part_choices)
     part_dropdown = ttk.Combobox(confirm_window, textvariable=part_name_var, values=part_choices)
-    part_dropdown.place(x=330, y=row(3), width=100, height=24)
+    part_dropdown.place(x=c1x, y=row(3), width=c1w, height=24)
     # set_color(part_dropdown)
 
     main_stat_label = tk.Label(confirm_window)
@@ -186,13 +194,14 @@ def artifact_confirm(atf_data, alpha):
     main_stat_x = 330
     main_stat_name_choices = data.get_data('main_stat_name')
     main_stat_name = atf_data['main_stat_name']
+    main_stat_name_choices_lang = list(data.get_text(text) for text in main_stat_name_choices)
     main_stat_name_var = tk.StringVar(confirm_window)
-    main_stat_name_var.set(main_stat_name)
-    main_stat_dropdown = ttk.Combobox(confirm_window, textvariable=main_stat_name_var, values=main_stat_name_choices)
-    main_stat_dropdown.place(x=330, y=row(4), width=100, height=24)
+    main_stat_name_var.set(get_text(main_stat_name))
+    main_stat_dropdown = ttk.Combobox(confirm_window, textvariable=main_stat_name_var, values=main_stat_name_choices_lang)
+    main_stat_dropdown.place(x=c1x, y=row(4), width=c1w, height=24)
 
     main_stat_value_text = tk.Text(confirm_window)
-    main_stat_value_text.place(x=main_stat_x + 106, y=row(4), width=50, height=24)
+    main_stat_value_text.place(x=c2x, y=row(4), width=c2w, height=24)
     main_stat_value_text.insert(1.0, atf_data['main_stat_value'][0])
     set_color(main_stat_value_text)
 
@@ -203,7 +212,7 @@ def artifact_confirm(atf_data, alpha):
     else:
         main_stat_value_percent_var.set(main_stat_value_percent_choices[1])
     main_stat_value_percent_dropdown = ttk.Combobox(confirm_window, textvariable=main_stat_value_percent_var, values=main_stat_value_percent_choices)
-    main_stat_value_percent_dropdown.place(x=main_stat_x + 106 + 56, y=row(4), width=80, height=24)
+    main_stat_value_percent_dropdown.place(x=c3x, y=row(4), width=c3w, height=24)
 
     star_label = tk.Label(confirm_window)
     star_label.place(x=256, y=row(5), height=24)
@@ -215,7 +224,7 @@ def artifact_confirm(atf_data, alpha):
     star_var = tk.StringVar(confirm_window)
     star_var.set(star)
     star_dropdown = ttk.Combobox(confirm_window, textvariable=star_var, values=star_choices)
-    star_dropdown.place(x=330, y=row(5), width=100, height=24)
+    star_dropdown.place(x=c1x, y=row(5), width=c1w, height=24)
 
     level_label = tk.Label(confirm_window)
     level_label.place(x=256, y=row(6), height=24)
@@ -227,7 +236,7 @@ def artifact_confirm(atf_data, alpha):
     level_var = tk.StringVar(confirm_window)
     level_var.set(level)
     level_dropdown = ttk.Combobox(confirm_window, textvariable=level_var, values=level_choices)
-    level_dropdown.place(x=330, y=row(6), width=100, height=24)
+    level_dropdown.place(x=c1x, y=row(6), width=c1w, height=24)
 
     if len(atf_data['sub_stat_name']) > 0:
         sub_stat_label = tk.Label(confirm_window)
@@ -243,14 +252,15 @@ def artifact_confirm(atf_data, alpha):
         for i, each_sub_stat in enumerate(atf_data['sub_stat_name']):
             sub_stat_y = row(7+i)
             sub_stat_name_choices = data.get_data('sub_stat_name')
+            sub_stat_name_choices_lang = list(data.get_text(text) for text in sub_stat_name_choices)
             sub_stat_name = each_sub_stat
             sub_stat_name_var.append(tk.StringVar(confirm_window))
-            sub_stat_name_var[i].set(sub_stat_name)
-            sub_stat_dropdown.append(ttk.Combobox(confirm_window, textvariable=sub_stat_name_var[i], values=sub_stat_name_choices))
-            sub_stat_dropdown[i].place(x=330, y=sub_stat_y, width=100, height=24)
+            sub_stat_name_var[i].set(get_text(sub_stat_name))
+            sub_stat_dropdown.append(ttk.Combobox(confirm_window, textvariable=sub_stat_name_var[i], values=sub_stat_name_choices_lang))
+            sub_stat_dropdown[i].place(x=c1x, y=sub_stat_y, width=c1w, height=24)
 
             sub_stat_value_text.append(tk.Text(confirm_window))
-            sub_stat_value_text[i].place(x=sub_stat_x + 106, y=sub_stat_y, width=50, height=24)
+            sub_stat_value_text[i].place(x=c2x, y=sub_stat_y, width=c2w, height=24)
             sub_stat_value_text[i].insert(1.0, atf_data['sub_stat_value'][i][0])
             set_color(sub_stat_value_text[i])
 
@@ -262,7 +272,7 @@ def artifact_confirm(atf_data, alpha):
                 sub_stat_value_percent_var[i].set(sub_stat_value_percent_choices[1])
             sub_stat_value_percent_dropdown = ttk.Combobox(confirm_window, textvariable=sub_stat_value_percent_var[i],
                                               values=sub_stat_value_percent_choices)
-            sub_stat_value_percent_dropdown.place(x=sub_stat_x + 106 + 56, y=sub_stat_y, width=80, height=24)
+            sub_stat_value_percent_dropdown.place(x=c3x, y=sub_stat_y, width=c3w, height=24)
 
     if 'sub_stat_y' in locals():
         asn_y = sub_stat_y + row(1) - 10
@@ -273,12 +283,12 @@ def artifact_confirm(atf_data, alpha):
     asn_label.configure(text=get_text('artifact_set'))
     set_color(asn_label)
 
-    asn_choices = data.get_data('artifact_set_name')
+    asn_choices = sorted(data.get_data('artifact_set_name'))
     asn = atf_data['asn_name']
     asn_var = tk.StringVar(confirm_window)
     asn_var.set(asn)
     asn_dropdown = ttk.Combobox(confirm_window, textvariable=asn_var, values=asn_choices)
-    asn_dropdown.place(x=330, y=asn_y, width=242, height=24)
+    asn_dropdown.place(x=c1x, y=asn_y, width=c1w + c2w + c3w + 12, height=24)
 
     confirm_window_main.append(confirm_window)
     set_alpha(alpha)

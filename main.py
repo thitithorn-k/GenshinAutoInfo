@@ -23,12 +23,10 @@ class App(tk.Tk):
         self.bind('<Button-3>', self.clickwin)
         self.bind('<B3-Motion>', self.dragwin)
 
-
     def dragwin(self, event):
         x = self.winfo_pointerx() - self._offsetx
         y = self.winfo_pointery() - self._offsety
         self.geometry('+{x}+{y}'.format(x=x, y=y))
-
 
     def clickwin(self, event):
         self._offsetx = event.x + event.widget.winfo_rootx() - self.winfo_rootx()
