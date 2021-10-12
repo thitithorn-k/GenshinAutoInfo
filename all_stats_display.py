@@ -5,6 +5,15 @@ from tkinter import ttk
 app = None
 artifact = [None]*5
 
+talent_name_label = []
+sub_talent_label = []
+sub_talent_damage_label = []
+
+selected_character = None
+data_file = openpyxl.open('./data/characters_weapons.xlsx')
+weapons_data = None
+talent = None
+
 stat_offset = [
     'C', 'D', 'E', 'F', 'G', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'W', 'X'
 ]
@@ -59,11 +68,6 @@ character_name = [
     'Aloy',
     'Kujou Sara'
 ]
-
-selected_character = None
-data_file = openpyxl.open('./data/characters_weapons.xlsx')
-weapons_data = None
-talent = None
 
 
 class App(tk.Toplevel):
@@ -361,26 +365,42 @@ def draw_window():
     def calcurate_talent_dmg():
         pass
 
-    current_row = 3
-    for each_talent in talent:
-        current_row += 1
-        talent_name_label = tk.Label(app)
-        talent_name_label.place(x=20, y=row(current_row), height=24)
-        talent_name_label.configure(text=each_talent[0])
-        set_color(talent_name_label)
-        for each_sub in each_talent[1]:
+    def draw_talent():
+        global talent_name_label, sub_talent_label
+        for each_main in talent_name_label:
+            each_main.destroy()
+        for each_sub in sub_talent_label:
+            each_sub.destroy()
+        for each_sub_dmg in sub_talent_damage_label:
+            each_sub_dmg.destroy()
+        current_row = 3
+        for each_talent in talent:
             current_row += 1
-            sub_talent_label = tk.Label(app)
-            sub_talent_label.place(x=40, y=row(current_row), height=24)
-            sub_talent_label.configure(text=f'- {each_sub[0]}')
-            set_color(sub_talent_label)
+            talent_name_label.append(tk.Label(app))
+            talent_name_label[len(talent_name_label)-1].place(x=20, y=row(current_row), height=24)
+            talent_name_label[len(talent_name_label)-1].configure(text=each_talent[0])
+            set_color(talent_name_label[len(talent_name_label)-1])
+            for each_sub in each_talent[1]:
+                current_row += 1
+                sub_talent_label.append(tk.Label(app))
+                sub_talent_label[len(sub_talent_label)-1].place(x=40, y=row(current_row), height=24)
+                sub_talent_label[len(sub_talent_label)-1].configure(text=f'- {each_sub[0]}')
+                set_color(sub_talent_label[len(sub_talent_label)-1])
 
-            sub_talent_damage_label = tk.Label(app)
-            sub_talent_damage_label.place(x=230, y=row(current_row), width=100, height=24)
-            sub_talent_damage_label.configure(text=each_sub[1], anchor='e', justify=tk.RIGHT)
-            set_color(sub_talent_damage_label)
+                sub_talent_damage_label.append(tk.Label(app))
+                sub_talent_damage_label[len(sub_talent_damage_label)-1].place(x=230, y=row(current_row), width=100, height=24)
+                sub_talent_damage_label[len(sub_talent_damage_label)-1].configure(text=each_sub[1], anchor='e', justify=tk.RIGHT)
+                set_color(sub_talent_damage_label[len(sub_talent_damage_label)-1])
+        app.geometry(f'350x{row(current_row + 1) + 6}+140+10')
 
-    app.geometry(f'350x{row(current_row+1)+6}+140+10')
+    # refresh weapon name and talent
+    character_change(None)
+
+    talent_label = tk.Label(app)
+    talent_label.place(x=10, y=row(3), height=24)
+    talent_label.configure(text='Talent Damage', font=('TkDefaultFont', 12))
+    set_color(talent_label)
+
     app.attributes('-topmost', True)
     app.attributes('-alpha', 0.95)
     app.mainloop()
