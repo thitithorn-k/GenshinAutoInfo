@@ -7,6 +7,7 @@ import cv2
 import data
 from data import get_text
 from data import get_keys
+from all_stats_display import change_atf
 
 confirm_window_main = []
 
@@ -31,12 +32,14 @@ class App(tk.Toplevel):
 
 
 def artifact_confirm(atf_data, alpha):
+    return_atf_data = {}
     bg_color = '#111111'
     fg_color = '#eeeeee'
 
     def confirm():
         change_check()
-        #  save to artifact
+        change_atf(return_atf_data)
+        confirm_window.destroy()
 
     def cancel():
         confirm_window_main.remove(confirm_window)
@@ -61,16 +64,19 @@ def artifact_confirm(atf_data, alpha):
             add_to_data(atf_data['asn_img_bw'], 'artifact_set_img_set', 'artifact_set_name', asn_var.get())
 
         # check data error
-        atf_data['star'] = star_var.get()
-        atf_data['level'] = level_var.get()
-        atf_data['part_name'] = part_name_var.get()
-        atf_data['main_stat_name'] = get_keys(main_stat_name_var.get())
-        atf_data['main_stat_value'][0] = float(main_stat_value_text.get('1.0', 'end-1c'))
-        atf_data['main_stat_value'][1] = main_stat_value_percent_choices.index(main_stat_value_percent_var.get())
+        return_atf_data['star'] = star_var.get()
+        return_atf_data['level'] = level_var.get()
+        return_atf_data['part_name'] = part_name_var.get()
+        return_atf_data['main_stat_name'] = get_keys(main_stat_name_var.get())
+        return_atf_data['main_stat_value'] = []
+        return_atf_data['main_stat_value'].append(float(main_stat_value_text.get('1.0', 'end-1c')))
+        return_atf_data['main_stat_value'].append(main_stat_value_percent_choices.index(main_stat_value_percent_var.get()))
+        return_atf_data['sub_stat_name'] = []
+        return_atf_data['sub_stat_value'] = []
         for i, each_sub in enumerate(atf_data['sub_stat_name']):
-            atf_data['sub_stat_name'][i] = sub_stat_name_var[i].get()
-            atf_data['sub_stat_value'][i] = float(sub_stat_value_text[i].get('1.0', 'end-1c'))
-        atf_data['asn_name'] = asn_var.get()
+            return_atf_data['sub_stat_name'].append(get_keys(sub_stat_name_var[i].get()))
+            return_atf_data['sub_stat_value'].append(float(sub_stat_value_text[i].get('1.0', 'end-1c')))
+        return_atf_data['asn_name'] = asn_var.get()
 
     def set_color(obj):
         obj['bg'] = bg_color

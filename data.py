@@ -174,3 +174,5 @@ def get_keys(text):
         return list(Translate.en.keys())[list(Translate.en.values()).index(text)]
     elif language == 1:
         return list(Translate.th.keys())[list(Translate.th.values()).index(text)]
+
+

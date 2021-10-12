@@ -38,7 +38,8 @@ def scan(sample=False):
     if type(im) is int:
         print('error')
     else:
-        stats_confirm.artifact_confirm(im, alpha)
+        res = stats_confirm.artifact_confirm(im, alpha)
+        print('res=', res)
 
 
 def scan_sample():
