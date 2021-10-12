@@ -6,8 +6,10 @@ app = None
 artifact = [None]*5
 
 talent_name_label = []
+talent_level_combobox = []
 sub_talent_label = []
 sub_talent_damage_label = []
+talent_level_var = []
 
 selected_character = None
 data_file = openpyxl.open('./data/characters_weapons.xlsx')
@@ -209,12 +211,12 @@ def load_weapons_data():
     weapons = data_file['Weapons']
     r_count = 0
     row = 2 + (27 * r_count)
-    weapons_data = []
+    weapons_d = []
     while weapons[f'A{row}'].value is not None:
-        weapons_data.append([weapons[f'A{row}'].value, weapons[f'B{row}'].value, weapons[f'C{row}'].value, row])
+        weapons_d.append([weapons[f'A{row}'].value, weapons[f'B{row}'].value, weapons[f'C{row}'].value, row])
         r_count += 1
         row = 2 + (27 * r_count)
-    return weapons_data  # (weapon name, type, rarity, row of data)
+    return weapons_d  # (weapon name, type, rarity, row of data)
 
 
 def get_character_info(char_name, level):
@@ -244,6 +246,7 @@ def load_talent():
     line = 1
     global talent
     talent = []
+    talent_level_column = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q']
     while True:
         A = atk_talent[f'A{line}'].value
         if A is not None:
@@ -251,7 +254,9 @@ def load_talent():
             line += 1
             while True:
                 B = atk_talent[f'B{line}'].value
-                percent = atk_talent[f'C{line}'].value
+                percent = []
+                for each_column in talent_level_column:
+                    percent.append(atk_talent[f'{each_column}{line}'].value)
                 if B is not None:
                     talent[len(talent)-1][1].append((B, percent))
                 else:
@@ -305,6 +310,7 @@ def draw_window():
             weapon_name_var.set(_weapons_name[0])
         weapon_name_dropdown.config(value=_weapons_name)
         load_talent()
+        draw_talent()
 
     character_label = tk.Label(app)
     character_label.place(x=10, y=10, height=24)
@@ -354,19 +360,11 @@ def draw_window():
     weapon_level_dropdown = ttk.Combobox(app, textvariable=weapon_level_var, values=weapon_level_choices)
     weapon_level_dropdown.place(x=230, y=row(1), width=60, height=24)
 
-    # refresh weapon name and talent
-    character_change(None)
-
-    talent_label = tk.Label(app)
-    talent_label.place(x=10, y=row(3), height=24)
-    talent_label.configure(text='Talent Damage', font=('TkDefaultFont', 12))
-    set_color(talent_label)
-
     def calcurate_talent_dmg():
         pass
 
     def draw_talent():
-        global talent_name_label, sub_talent_label
+        global talent_name_label, sub_talent_label, talent_level_var
         for each_main in talent_name_label:
             each_main.destroy()
         for each_sub in sub_talent_label:
@@ -374,23 +372,41 @@ def draw_window():
         for each_sub_dmg in sub_talent_damage_label:
             each_sub_dmg.destroy()
         current_row = 3
-        for each_talent in talent:
+        for i, each_talent in enumerate(talent):
             current_row += 1
             talent_name_label.append(tk.Label(app))
-            talent_name_label[len(talent_name_label)-1].place(x=20, y=row(current_row), height=24)
-            talent_name_label[len(talent_name_label)-1].configure(text=each_talent[0])
-            set_color(talent_name_label[len(talent_name_label)-1])
+            last_talent_name_label = len(talent_name_label)-1
+            talent_name_label[last_talent_name_label].place(x=20, y=row(current_row), height=24)
+            talent_name_label[last_talent_name_label].configure(text=each_talent[0])
+            set_color(talent_name_label[last_talent_name_label])
+
+            talent_level_choices = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15']
+            talent_level_choices = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+            if len(talent_level_var) > i:
+                pass
+            else:
+                talent_level_var.append(tk.StringVar(app))
+                talent_level_var[len(talent_level_var)-1].set(talent_level_choices[9])
+            talent_level_combobox.append(ttk.Combobox(app, textvariable=talent_level_var[i], values=talent_level_choices))
+            last_talent_level_combobox = len(talent_level_combobox) - 1
+            talent_level_combobox[last_talent_level_combobox].bind('<<ComboboxSelected>>', character_change)
+            talent_level_combobox[last_talent_level_combobox].place(x=270, y=row(current_row), width=60, height=24)
+
+            level = int(talent_level_var[i].get()) - 1
+
             for each_sub in each_talent[1]:
                 current_row += 1
                 sub_talent_label.append(tk.Label(app))
-                sub_talent_label[len(sub_talent_label)-1].place(x=40, y=row(current_row), height=24)
-                sub_talent_label[len(sub_talent_label)-1].configure(text=f'- {each_sub[0]}')
-                set_color(sub_talent_label[len(sub_talent_label)-1])
+                last_sub_talent_label = len(sub_talent_label)-1
+                sub_talent_label[last_sub_talent_label].place(x=40, y=row(current_row), height=24)
+                sub_talent_label[last_sub_talent_label].configure(text=f'- {each_sub[0]}')
+                set_color(sub_talent_label[last_sub_talent_label])
 
                 sub_talent_damage_label.append(tk.Label(app))
-                sub_talent_damage_label[len(sub_talent_damage_label)-1].place(x=230, y=row(current_row), width=100, height=24)
-                sub_talent_damage_label[len(sub_talent_damage_label)-1].configure(text=each_sub[1], anchor='e', justify=tk.RIGHT)
-                set_color(sub_talent_damage_label[len(sub_talent_damage_label)-1])
+                last_sub_talent_damage_label = len(sub_talent_damage_label)-1
+                sub_talent_damage_label[last_sub_talent_damage_label].place(x=230, y=row(current_row), width=100, height=24)
+                sub_talent_damage_label[last_sub_talent_damage_label].configure(text=each_sub[1][level], anchor='e', justify=tk.RIGHT)
+                set_color(sub_talent_damage_label[last_sub_talent_damage_label])
         app.geometry(f'350x{row(current_row + 1) + 6}+140+10')
 
     # refresh weapon name and talent
