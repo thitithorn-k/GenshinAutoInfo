@@ -39,6 +39,7 @@ def artifact_confirm(atf_data, alpha):
     def confirm():
         change_check()
         change_atf(return_atf_data)
+        confirm_window_main.remove(confirm_window)
         confirm_window.destroy()
 
     def cancel():
@@ -187,10 +188,8 @@ def artifact_confirm(atf_data, alpha):
     part_name = atf_data['part_name']
     part_name_var = tk.StringVar(confirm_window)
     part_name_var.set(part_name)
-    # part_dropdown = tk.OptionMenu(confirm_window, part_name_var, *part_choices)
     part_dropdown = ttk.Combobox(confirm_window, textvariable=part_name_var, values=part_choices)
     part_dropdown.place(x=c1x, y=row(3), width=c1w, height=24)
-    # set_color(part_dropdown)
 
     main_stat_label = tk.Label(confirm_window)
     main_stat_label.place(x=256, y=row(4), height=24)
