@@ -303,7 +303,7 @@ def load_all_atf():
         elif main_stat_name == 'geo':
             artifact_stat.GEO_DMG.append(main_stat_value[0]/100)
         elif main_stat_name == 'electro':
-            artifact_stat.ELECTRP_DMG.append(main_stat_value[0]/100)
+            artifact_stat.ELECTRO_DMG.append(main_stat_value[0]/100)
         elif main_stat_name == 'hydro':
             artifact_stat.HYDRPO_DMG.append(main_stat_value[0]/100)
         elif main_stat_name == 'pyro':
@@ -320,31 +320,32 @@ def load_all_atf():
         sub_stats_name = each_atf['sub_stat_name']
         sub_stats_value = each_atf['sub_stat_value']
         for i, each_sub_name in enumerate(sub_stats_name):
+            each_sub_value = sub_stats_value[i]
             if each_sub_name == 'hp':
-                if sub_stats_value[1] == 0:
-                    artifact_stat.HP.append(sub_stats_value[0])
-                elif sub_stats_value[1] == 1:
-                    artifact_stat.HP_p.append(sub_stats_value[0]/100)
+                if each_sub_value[1] == 0:
+                    artifact_stat.HP.append(each_sub_value[0])
+                elif each_sub_value[1] == 1:
+                    artifact_stat.HP_p.append(each_sub_value[0]/100)
             elif each_sub_name == 'atk':
-                if sub_stats_value[1] == 0:
-                    artifact_stat.ATK.append(sub_stats_value[0])
-                elif sub_stats_value[1] == 1:
-                    artifact_stat.ATK_p.append(sub_stats_value[0]/100)
+                if each_sub_value[1] == 0:
+                    artifact_stat.ATK.append(each_sub_value[0])
+                elif each_sub_value[1] == 1:
+                    artifact_stat.ATK_p.append(each_sub_value[0]/100)
             elif each_sub_name == 'def':
-                if sub_stats_value[1] == 0:
-                    artifact_stat.DEF.append(sub_stats_value[0])
-                elif sub_stats_value[1] == 1:
-                    artifact_stat.DEF_p.append(sub_stats_value[0]/100)
+                if each_sub_value[1] == 0:
+                    artifact_stat.DEF.append(each_sub_value[0])
+                elif each_sub_value[1] == 1:
+                    artifact_stat.DEF_p.append(each_sub_value[0]/100)
             elif each_sub_name == 'cri_dmg':
-                artifact_stat.CD.append(sub_stats_value[0]/100)
+                artifact_stat.CD.append(each_sub_value[0]/100)
             elif each_sub_name == 'cri_rate':
-                artifact_stat.CR.append(sub_stats_value[0]/100)
+                artifact_stat.CR.append(each_sub_value[0]/100)
             elif each_sub_name == 'element':
-                artifact_stat.EM.append(sub_stats_value[0])
+                artifact_stat.EM.append(each_sub_value[0])
             elif each_sub_name == 'energy':
-                artifact_stat.ER.append(sub_stats_value[0]/100)
+                artifact_stat.ER.append(each_sub_value[0]/100)
 
-    # artifact_stat.print_log()
+    artifact_stat.print_log()
     # TODO add artifact effect
 
 
@@ -462,23 +463,23 @@ def calculate_stats():
                  (1-mon_res/100) * \
                  (1 + ((1600 * final_stats.em / (2000 + final_stats.em)) / 100) + reaction_dmg_bonus)
 
-    print(f'ATK normal final: {final_stats.atk_normal}\n'
-          f'ATK average final: {final_stats.atk_average}\n'
-          f'ATK critical final: {final_stats.atk_critical}')
-    print(f'Monster RES final: {final_stats.monster_res}')
-    print(f'DEF normal final: {final_stats.def_normal}\n'
-          f'DEF average final: {final_stats.def_average}\n'
-          f'DEF critical final: {final_stats.def_critical}')
-    print(f'HP normal final: {final_stats.hp_normal}\n'
-          f'HP average final: {final_stats.hp_average}\n'
-          f'HP critical final: {final_stats.hp_critical}')
-    print(f'Elemental Mastery final: {final_stats.em}')
-    print(f'Energy Recharge final: {final_stats.er}')
-    print(f'overloaded: {final_stats.overloaded}\n'
-          f'electrocharged: {final_stats.electrocharged}\n'
-          f'swirl: {final_stats.swirl}\n'
-          f'shatter: {final_stats.shatter}\n'
-          f'superconduct: {final_stats.superconduct}')
+    # print(f'ATK normal final: {final_stats.atk_normal}\n'
+    #       f'ATK average final: {final_stats.atk_average}\n'
+    #       f'ATK critical final: {final_stats.atk_critical}')
+    # print(f'Monster RES final: {final_stats.monster_res}')
+    # print(f'DEF normal final: {final_stats.def_normal}\n'
+    #       f'DEF average final: {final_stats.def_average}\n'
+    #       f'DEF critical final: {final_stats.def_critical}')
+    # print(f'HP normal final: {final_stats.hp_normal}\n'
+    #       f'HP average final: {final_stats.hp_average}\n'
+    #       f'HP critical final: {final_stats.hp_critical}')
+    # print(f'Elemental Mastery final: {final_stats.em}')
+    # print(f'Energy Recharge final: {final_stats.er}')
+    # print(f'overloaded: {final_stats.overloaded}\n'
+    #       f'electrocharged: {final_stats.electrocharged}\n'
+    #       f'swirl: {final_stats.swirl}\n'
+    #       f'shatter: {final_stats.shatter}\n'
+    #       f'superconduct: {final_stats.superconduct}')
 
 
 def load_talent():

@@ -119,6 +119,7 @@ class Translate:
         'add_confirm_caution': 'Add the following image to the dataset to improve the performance of your program',
         'yes': 'Yes',
         'no': 'No',
+        'none': 'None',
         'add_confirm_question_start': 'The text on the image above is ',
         'add_confirm_question_end': 'I can read it clearly and\nit doesn\'t have any \'white dot\' on it '
     }
@@ -152,6 +153,7 @@ class Translate:
         'add_confirm_caution': 'เพิ่มรูปภาพต่อไปนี้ลงในฐานข้อมูล\nเพื่อปรับปรุงคุณภาพของโปรแกรมของคุณให้ดียิ่งขึ้น',
         'yes': 'ใช่',
         'no': 'ไม่ใช่',
+        'none': 'ไม่มี',
         'add_confirm_question_start': 'ข้อความในภาพด้านบนคือ ',
         'add_confirm_question_end': 'ฉันสามารถอ่านมันได้อย่างง่ายดาย\nและไม่มีจุดสีขาวปะปนอยู่ในภาพ'
     }

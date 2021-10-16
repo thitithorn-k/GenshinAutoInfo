@@ -74,9 +74,13 @@ def artifact_confirm(atf_data, alpha):
         return_atf_data['main_stat_value'].append(main_stat_value_percent_choices.index(main_stat_value_percent_var.get()))
         return_atf_data['sub_stat_name'] = []
         return_atf_data['sub_stat_value'] = []
-        for i, each_sub in enumerate(atf_data['sub_stat_name']):
+        for i in range(4):
+            if get_keys(sub_stat_name_var[i].get()) == 'none':
+                print('con')
+                continue
             return_atf_data['sub_stat_name'].append(get_keys(sub_stat_name_var[i].get()))
-            return_atf_data['sub_stat_value'].append(float(sub_stat_value_text[i].get('1.0', 'end-1c')))
+            return_atf_data['sub_stat_value'].append([float(sub_stat_value_text[i].get('1.0', 'end-1c')),
+                                                      sub_stat_value_percent_choices.index(sub_stat_value_percent_var[i].get())])
         return_atf_data['asn_name'] = asn_var.get()
 
     def set_color(obj):
@@ -141,7 +145,7 @@ def artifact_confirm(atf_data, alpha):
 
     confirm_window = App()
     confirm_window.title('Artifact status confirmation')
-    confirm_window.geometry(f'650x{image_h+110}')
+    confirm_window.geometry(f'650x{(image_h+110) if (image_h+110) > 400 else 390}')
     confirm_window.configure(bg=bg_color)
     s = ttk.Style()
     s.theme_use('winnative')
@@ -243,41 +247,52 @@ def artifact_confirm(atf_data, alpha):
     level_dropdown = ttk.Combobox(confirm_window, textvariable=level_var, values=level_choices)
     level_dropdown.place(x=c1x, y=row(6), width=c1w, height=24)
 
-    if len(atf_data['sub_stat_name']) > 0:
-        sub_stat_label = tk.Label(confirm_window)
-        sub_stat_label.place(x=256, y=row(7), height=24)
-        sub_stat_label.configure(text=get_text('sub_stat'))
-        set_color(sub_stat_label)
+    sub_stat_label = tk.Label(confirm_window)
+    sub_stat_label.place(x=256, y=row(7), height=24)
+    sub_stat_label.configure(text=get_text('sub_stat'))
+    set_color(sub_stat_label)
 
-        sub_stat_x = 330
-        sub_stat_dropdown = []
-        sub_stat_name_var = []
-        sub_stat_value_text = []
-        sub_stat_value_percent_var = []
-        for i, each_sub_stat in enumerate(atf_data['sub_stat_name']):
-            sub_stat_y = row(7+i)
-            sub_stat_name_choices = data.get_data('sub_stat_name')
-            sub_stat_name_choices_lang = list(data.get_text(text) for text in sub_stat_name_choices)
-            sub_stat_name = each_sub_stat
-            sub_stat_name_var.append(tk.StringVar(confirm_window))
-            sub_stat_name_var[i].set(get_text(sub_stat_name))
-            sub_stat_dropdown.append(ttk.Combobox(confirm_window, textvariable=sub_stat_name_var[i], values=sub_stat_name_choices_lang))
-            sub_stat_dropdown[i].place(x=c1x, y=sub_stat_y, width=c1w, height=24)
+    sub_stat_x = 330
+    sub_stat_dropdown = []
+    sub_stat_name_var = []
+    sub_stat_value_text = []
+    sub_stat_value_percent_var = []
 
-            sub_stat_value_text.append(tk.Text(confirm_window))
-            sub_stat_value_text[i].place(x=c2x, y=sub_stat_y, width=c2w, height=24)
+    sub_stats_name = atf_data['sub_stat_name']
+    sub_stat_name_choices = data.get_data('sub_stat_name').copy()
+    sub_stat_name_choices.insert(0, 'none')
+    sub_stat_name_choices_lang = list(data.get_text(text) for text in sub_stat_name_choices)
+    for i in range(4):
+        sub_stat_y = row(7+i)
+        if i < len(sub_stats_name):
+            sub_stat_name = sub_stats_name[i]
+        else:
+            sub_stat_name = 'none'
+        sub_stat_name_var.append(tk.StringVar(confirm_window))
+        sub_stat_name_var[i].set(get_text(sub_stat_name))
+        sub_stat_dropdown.append(ttk.Combobox(confirm_window, textvariable=sub_stat_name_var[i], values=sub_stat_name_choices_lang))
+        sub_stat_dropdown[i].place(x=c1x, y=sub_stat_y, width=c1w, height=24)
+
+        sub_stat_value_text.append(tk.Text(confirm_window))
+        sub_stat_value_text[i].place(x=c2x, y=sub_stat_y, width=c2w, height=24)
+        if i < len(sub_stats_name):
             sub_stat_value_text[i].insert(1.0, atf_data['sub_stat_value'][i][0])
-            set_color(sub_stat_value_text[i])
+        else:
+            sub_stat_value_text[i].insert(1.0, 0)
+        set_color(sub_stat_value_text[i])
 
-            sub_stat_value_percent_choices = ['Point', '%']
-            sub_stat_value_percent_var.append(tk.StringVar(confirm_window))
+        sub_stat_value_percent_choices = ['Point', '%']
+        sub_stat_value_percent_var.append(tk.StringVar(confirm_window))
+        if i < len(sub_stats_name):
             if atf_data['sub_stat_value'][i][1] == 0:
                 sub_stat_value_percent_var[i].set(sub_stat_value_percent_choices[0])
             else:
                 sub_stat_value_percent_var[i].set(sub_stat_value_percent_choices[1])
-            sub_stat_value_percent_dropdown = ttk.Combobox(confirm_window, textvariable=sub_stat_value_percent_var[i],
-                                              values=sub_stat_value_percent_choices)
-            sub_stat_value_percent_dropdown.place(x=c3x, y=sub_stat_y, width=c3w, height=24)
+        else:
+            sub_stat_value_percent_var[i].set(sub_stat_value_percent_choices[0])
+        sub_stat_value_percent_dropdown = ttk.Combobox(confirm_window, textvariable=sub_stat_value_percent_var[i],
+                                          values=sub_stat_value_percent_choices)
+        sub_stat_value_percent_dropdown.place(x=c3x, y=sub_stat_y, width=c3w, height=24)
 
     if 'sub_stat_y' in locals():
         asn_y = sub_stat_y + row(1) - 10
