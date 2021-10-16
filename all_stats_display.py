@@ -1,6 +1,9 @@
+import os
+
 import openpyxl
 import tkinter as tk
 from tkinter import ttk
+import pickle
 
 from class_file.artifact_stat import ArtifactStat
 from class_file.stats import Stats
@@ -107,6 +110,19 @@ character_name = [
     'Traveler Male Electro',
     'Traveler Female Electro'
 ]
+
+
+def write_save(obj):
+    with open('data/save.pkl', 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+
+def read_save():
+    if os.path.isfile('data/save.pkl'):
+        with open('data/save.pkl', 'rb') as f:
+            return pickle.load(f)
+    else:
+        return {'characters': {}}
 
 
 def change_atf(atf_data):
@@ -375,6 +391,7 @@ def set_alpha(value):
 
 # draw stats window
 def draw_window():
+    save_data = read_save()
 
     def row(r):
         return 10 + (r*30)
@@ -401,18 +418,40 @@ def draw_window():
     app.option_add("*TCombobox*Listbox*Background", bg_color)
     app.option_add("*TCombobox*Listbox*Foreground", fg_color)
 
+    def save_selected_data():
+        selected_character_name = save_data['selected_character']
+        if selected_character_name not in save_data['characters']:
+            save_data['characters'][selected_character_name] = None
+        save_data['characters'][selected_character_name] = {'level': char_level_var.get(),
+                                                            'weapon': weapon_name_var.get(),
+                                                            'weapon_level': weapon_level_var.get(),
+                                                            'artifacts': [],
+                                                            'talents_level': []}
+        for each_talent_level in talent_level_var:
+            save_data['characters'][selected_character_name]['talents_level'].append(each_talent_level.get())
+        write_save(save_data)
+
     # Select Character
     def character_change(self):
         global selected_character
         selected_character = get_character_info(char_name_var.get(), char_level_var.get())
-        print(selected_character.HP)
+        save_data['selected_character'] = char_name_var.get()
+
+        if char_name_var.get() in save_data['characters']:
+            char_level_var.set(save_data['characters'][char_name_var.get()]['level'])
 
         _weapons_name = sorted([weapons_data[i][0] for i, _ in enumerate(weapons_data) if weapons_data[i][1] == selected_character.WEAPON_TYPE])
-        if weapon_name_var.get() not in _weapons_name and len(_weapons_name) > 0:
+        if char_name_var.get() in save_data['characters']:
+            weapon_name_var.set(save_data['characters'][char_name_var.get()]['weapon'])
+        elif weapon_name_var.get() not in _weapons_name and len(_weapons_name) > 0:
             weapon_name_var.set(_weapons_name[0])
         weapon_name_dropdown.config(value=_weapons_name)
         load_talent()
         weapon_name_changed(self)
+
+    def character_level_change(self):
+        save_selected_data()
+        draw_talent()
 
     character_label = tk.Label(app)
     character_label.place(x=10, y=10, height=24)
@@ -421,29 +460,46 @@ def draw_window():
 
     char_name_choices = sorted(character_name)
     char_name_var = tk.StringVar(app)
-    char_name_var.set(char_name_choices[0])
+    if 'selected_character' in save_data:
+        char_name_var.set(save_data['selected_character'])
+    else:
+        char_name_var.set(char_name_choices[0])
     char_name_dropdown = ttk.Combobox(app, textvariable=char_name_var, values=char_name_choices)
     char_name_dropdown.bind('<<ComboboxSelected>>', character_change)
     char_name_dropdown.place(x=70, y=row(0), width=150, height=24)
 
     char_level_choices = char_level_offset
     char_level_var = tk.StringVar(app)
-    char_level_var.set(char_level_offset[len(char_level_offset) - 1])
+    if 'selected_character' in save_data:
+        char_level_var.set(save_data['characters'][char_name_var.get()]['level'])
+    else:
+        char_level_var.set(char_level_offset[len(char_level_offset) - 1])
     char_level_dropdown = ttk.Combobox(app, textvariable=char_level_var, values=char_level_choices)
-    char_level_dropdown.bind('<<ComboboxSelected>>', character_change)
+    char_level_dropdown.bind('<<ComboboxSelected>>', character_level_change)
     char_level_dropdown.place(x=230, y=row(0), width=60, height=24)
 
     def weapon_name_changed(self):
         global selected_weapon
         selected_weapon = get_weapon_info(weapon_name_var.get(), weapon_level_var.get())
+
+
         rarity = [weapons_data[i][2] for i, _ in enumerate(weapons_data) if weapons_data[i][0] == weapon_name_var.get()]
         if len(rarity) > 0 and (rarity[0] == 1 or rarity[0] == 2):
             weapons_level = weapons_level_offset[0:19]
-            if weapon_level_var.get() not in weapons_level:
-                weapon_level_var.set(weapons_level[len(weapons_level)-1])
         else:
             weapons_level = weapons_level_offset
+
+        if char_name_var.get() in save_data['characters']:
+            weapon_level_var.set(save_data['characters'][char_name_var.get()]['weapon_level'])
+        elif weapon_level_var.get() not in weapons_level:
+            weapon_level_var.set(weapons_level[len(weapons_level) - 1])
+
         weapon_level_dropdown.config(value=weapons_level)
+        save_selected_data()
+        draw_talent()
+
+    def weapon_level_changed(self):
+        save_selected_data()
         draw_talent()
 
     weapon_label = tk.Label(app)
@@ -454,16 +510,22 @@ def draw_window():
     weapons_name = [weapons_data[i][0] for i, _ in enumerate(weapons_data)]
     weapon_name_choices = sorted(weapons_name)
     weapon_name_var = tk.StringVar(app)
-    weapon_name_var.set(weapon_name_choices[0])
+    if char_name_var.get() in save_data['characters']:
+        weapon_name_var.set(save_data['characters'][char_name_var.get()]['weapon'])
+    else:
+        weapon_name_var.set(weapon_name_choices[0])
     weapon_name_dropdown = ttk.Combobox(app, textvariable=weapon_name_var, values=weapon_name_choices)
     weapon_name_dropdown.bind('<<ComboboxSelected>>', weapon_name_changed)
     weapon_name_dropdown.place(x=70, y=row(1), width=150, height=24)
 
     weapon_level_choices = weapons_level_offset
     weapon_level_var = tk.StringVar(app)
-    weapon_level_var.set(weapons_level_offset[len(weapons_level_offset) - 1])
+    if 'selected_weapon' in save_data:
+        weapon_level_var.set(save_data['characters'][char_name_var.get()]['weapon_level'])
+    else:
+        weapon_level_var.set(weapons_level_offset[len(weapons_level_offset) - 1])
     weapon_level_dropdown = ttk.Combobox(app, textvariable=weapon_level_var, values=weapon_level_choices)
-    weapon_level_dropdown.bind('<<ComboboxSelected>>', weapon_name_changed)
+    weapon_level_dropdown.bind('<<ComboboxSelected>>', weapon_level_changed)
     weapon_level_dropdown.place(x=230, y=row(1), width=60, height=24)
 
     def calcurate_talent_dmg(talent_value, talent_type):
