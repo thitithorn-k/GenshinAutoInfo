@@ -430,6 +430,7 @@ def draw_window():
         for each_talent_level in talent_level_var:
             save_data['characters'][selected_character_name]['talents_level'].append(each_talent_level.get())
         write_save(save_data)
+        print('saved')
 
     # Select Character
     def character_change(self):
@@ -495,8 +496,8 @@ def draw_window():
             weapon_level_var.set(weapons_level[len(weapons_level) - 1])
 
         weapon_level_dropdown.config(value=weapons_level)
-        save_selected_data()
         draw_talent()
+        save_selected_data()
 
     def weapon_level_changed(self):
         save_selected_data()
@@ -587,8 +588,13 @@ def draw_window():
         return talent_value_final
 
     def draw_talent():
-        calculate_stats()
         global talent_name_label, sub_talent_label, talent_level_var
+
+        def talent_change(self):
+            save_selected_data()
+            draw_talent()
+
+        calculate_stats()
         for each_main in talent_name_label:
             each_main.destroy()
         for each_sub in sub_talent_label:
@@ -597,6 +603,7 @@ def draw_window():
             each_sub_dmg.destroy()
         current_row = 3
 
+        talent_level_var.clear()
         for i, each_talent in enumerate(talent):
             current_row += 1
             # draw talent name
@@ -607,14 +614,15 @@ def draw_window():
             set_color(talent_name_label[last_talent_name_label])
 
             talent_level_choices = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-            if len(talent_level_var) > i:
-                pass
+
+            talent_level_var.append(tk.StringVar(app))
+            if char_name_var.get() in save_data['characters'] and len(save_data['characters'][char_name_var.get()]['talents_level']) > 0:
+                talent_level_var[i].set(save_data['characters'][char_name_var.get()]['talents_level'][i])
             else:
-                talent_level_var.append(tk.StringVar(app))
-                talent_level_var[len(talent_level_var)-1].set(talent_level_choices[9])
+                talent_level_var[i].set(talent_level_choices[9])
             talent_level_combobox.append(ttk.Combobox(app, textvariable=talent_level_var[i], values=talent_level_choices))
             last_talent_level_combobox = len(talent_level_combobox) - 1
-            talent_level_combobox[last_talent_level_combobox].bind('<<ComboboxSelected>>', character_change)
+            talent_level_combobox[last_talent_level_combobox].bind('<<ComboboxSelected>>', talent_change)
             talent_level_combobox[last_talent_level_combobox].place(x=270, y=row(current_row), width=60, height=24)
 
             level = int(talent_level_var[i].get()) - 1
