@@ -2,154 +2,12 @@ import openpyxl
 import tkinter as tk
 from tkinter import ttk
 
-
-class App(tk.Toplevel):
-    def __init__(self, master=None):
-        tk.Toplevel.__init__(self, master)
-        self.overrideredirect(True)
-        self._offsetx = 0
-        self._offsety = 0
-        self.bind('<Button-3>', self.clickwin)
-        self.bind('<B3-Motion>', self.dragwin)
-
-    def dragwin(self, event):
-        x = self.winfo_pointerx() - self._offsetx
-        y = self.winfo_pointery() - self._offsety
-        self.geometry('+{x}+{y}'.format(x=x, y=y))
-
-    def clickwin(self, event):
-        self._offsetx = event.x + event.widget.winfo_rootx() - self.winfo_rootx()
-        self._offsety = event.y + event.widget.winfo_rooty() - self.winfo_rooty()
-
-
-class ArtifactStat:
-    def __init__(self):
-        self.ATK = []
-        self.ATK_p = []
-        self.CR = []
-        self.CD = []
-        self.EM = []
-        self.HP = []
-        self.HP_p = []
-        self.DEF = []
-        self.DEF_p = []
-        self.PDMG = []
-        self.ANEMO_DMG = []
-        self.GEO_DMG = []
-        self.ELECTRO_DMG = []
-        self.HYDRPO_DMG = []
-        self.PYRO_DMG = []
-        self.CRYO_DMG = []
-        self.HEAL = []
-        self.SHIELD = []
-        self.ER = []
-
-    def print_log(self):
-        print(f'ATK={self.ATK}\n'
-              f'ATK_p={self.ATK_p}\n'
-              f'CR={self.CR}\n'
-              f'CD={self.CD}\n'
-              f'EM={self.EM}\n'
-              f'HP={self.HP}\n'
-              f'HP_p={self.HP_p}\n'
-              f'DEF={self.DEF}\n'
-              f'DEF_p={self.DEF_p}\n'
-              f'PDMG_p={self.PDMG}\n'
-              f'ANEMO_DMG={self.ANEMO_DMG}\n'
-              f'GEO_DMG={self.GEO_DMG}\n'
-              f'ELECTRO_DMG={self.ELECTRO_DMG}\n'
-              f'HYDRO_DMG={self.HYDRPO_DMG}\n'
-              f'PYRO_DMG={self.PYRO_DMG}\n'
-              f'CRYO_DMG={self.CRYO_DMG}\n'
-              f'HEAL={self.HEAL}\n'
-              f'SHIELD={self.SHIELD}\n'
-              f'ER={self.ER}')
-
-
-class Stats:
-    def __init__(self):
-        self.ATK = []
-        self.ATK_p = []
-        self.CR = []
-        self.CD = []
-        self.EM = []
-        self.HP = []
-        self.HP_p = []
-        self.DEF = []
-        self.DEF_p = []
-        self.PDMG = []
-        self.ANEMO_DMG = []
-        self.GEO_DMG = []
-        self.ELECTRO_DMG = []
-        self.HYDRPO_DMG = []
-        self.PYRO_DMG = []
-        self.CRYO_DMG = []
-        self.HEAL = []
-        self.SHIELD = []
-        self.ER = []
-
-
-class Character:
-    def __init__(self, name, HP, ATK, DEF, CR, CD, ATK_p, EM, HP_p, DEF_p,
-                 HEAL, PDMG, EDMG, BSCONDUCT, BOVERLOAD, BELECTROCH, BSWIRL,
-                 BSHATTER, BCRYSTALIZE, ER, WEAPON_TYPE, ELEMENTAL, lv):
-        self.name = name
-        self.HP = HP  # 0
-        self.ATK = ATK  # 1
-        self.DEF = DEF  # 2
-        self.CR = CR  # 3
-        self.CD = CD  # 4
-        self.ATK_p = ATK_p  # 5
-        self.EM = EM  # 6
-        self.HP_p = HP_p  # 7
-        self.DEF_p = DEF_p  # 8
-        self.HEAL = HEAL  # 9
-        self.PDMG = PDMG  # 10
-        self.EDMG = EDMG  # 11
-        self.BSCONDUCT = BSCONDUCT  # 12
-        self.BOVERLOAD = BOVERLOAD  # 13
-        self.BELECTROCH = BELECTROCH  # 14
-        self.BSWIRL = BSWIRL  # 15
-        self.BSHATTER = BSHATTER  # 16
-        self.BCRYSTALIZE = BCRYSTALIZE  # 17
-        self.ER = ER  # 18
-        self.WEAPON_TYPE = WEAPON_TYPE  # 19
-        self.ELEMENTAL = ELEMENTAL  # 20
-        self.level = lv  # 21
-
-
-class Weapon:
-    def __init__(self, ATK, HP_p, ATK_p, DEF_p, CR, CD, EM, ER, PDMG):
-        self.ATK = ATK
-        self.HP_p = HP_p
-        self.ATK_p = ATK_p
-        self.DEF_p = DEF_p
-        self.CR = CR
-        self.CD = CD
-        self.EM = EM
-        self.ER = ER
-        self.PDMG = PDMG
-
-
-class FinalStats:
-    def __init__(self):
-        self.atk_normal = 0
-        self.atk_average = 0
-        self.atk_critical = 0
-        self.monster_res = 0
-        self.def_normal = 0
-        self.def_average = 0
-        self.def_critical = 0
-        self.hp_normal = 0
-        self.hp_average = 0
-        self.hp_critical = 0
-        self.em = 0
-        self.er = 0
-        self.overloaded = 0
-        self.electrocharged = 0
-        self.swirl = 0
-        self.shatter = 0
-        self.superconduct = 0
+from class_file.artifact_stat import ArtifactStat
+from class_file.stats import Stats
+from class_file.character import Character
+from class_file.weapon import Weapon
+from class_file.filnal_stats import FinalStats
+from class_file.app import AppTopLevel
 
 app = None
 
@@ -537,7 +395,7 @@ def draw_window():
     # weapon_type_var = None
 
     global app
-    app = App()
+    app = AppTopLevel()
 
     app.configure(bg=bg_color)
     app.option_add("*TCombobox*Listbox*Background", bg_color)

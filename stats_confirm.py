@@ -9,26 +9,9 @@ from data import get_text
 from data import get_keys
 from all_stats_display import change_atf
 
+from class_file.app import AppTopLevel
+
 confirm_window_main = []
-
-
-class App(tk.Toplevel):
-    def __init__(self, master=None):
-        tk.Toplevel.__init__(self, master)
-        self.overrideredirect(True)
-        self._offsetx = 0
-        self._offsety = 0
-        self.bind('<Button-3>', self.clickwin)
-        self.bind('<B3-Motion>', self.dragwin)
-
-    def dragwin(self, event):
-        x = self.winfo_pointerx() - self._offsetx
-        y = self.winfo_pointery() - self._offsety
-        self.geometry('+{x}+{y}'.format(x=x, y=y))
-
-    def clickwin(self, event):
-        self._offsetx = event.x+event.widget.winfo_rootx()-self.winfo_rootx()
-        self._offsety = event.y + event.widget.winfo_rooty() - self.winfo_rooty()
 
 
 def artifact_confirm(atf_data, alpha):
@@ -100,7 +83,7 @@ def artifact_confirm(atf_data, alpha):
         def add_data_cancel():
             add_data_window.destroy()
 
-        add_data_window = App()
+        add_data_window = AppTopLevel()
         add_data_window.title('add data confirm')
         add_data_window.geometry('300x200')
         add_data_window.configure(bg=bg_color)
@@ -143,7 +126,7 @@ def artifact_confirm(atf_data, alpha):
     artifact_status_img_rgb = cv2.merge((r, g, b))
     image_h = artifact_status_img.shape[0]
 
-    confirm_window = App()
+    confirm_window = AppTopLevel()
     confirm_window.title('Artifact status confirmation')
     confirm_window.geometry(f'650x{(image_h+110) if (image_h+110) > 400 else 390}')
     confirm_window.configure(bg=bg_color)
