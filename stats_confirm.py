@@ -66,6 +66,14 @@ def artifact_confirm(atf_data, alpha):
                                                       sub_stat_value_percent_choices.index(sub_stat_value_percent_var[i].get())])
         return_atf_data['asn_name'] = asn_var.get()
 
+        # add old data
+        return_atf_data['artifact_status_img'] = atf_data['artifact_status_img']
+        return_atf_data['part_name_img_bw'] = atf_data['part_name_img_bw']
+        return_atf_data['main_stat_name_img_bw'] = atf_data['main_stat_name_img_bw']
+        return_atf_data['sub_stat_name_img_bw'] = atf_data['sub_stat_name_img_bw']
+        return_atf_data['asn_img_bw'] = atf_data['asn_img_bw']
+
+
     def set_color(obj):
         obj['bg'] = bg_color
         obj['fg'] = fg_color

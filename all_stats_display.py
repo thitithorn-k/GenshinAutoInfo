@@ -11,6 +11,7 @@ from class_file.character import Character
 from class_file.weapon import Weapon
 from class_file.filnal_stats import FinalStats
 from class_file.app import AppTopLevel
+import stats_confirm
 
 app = None
 
@@ -41,12 +42,14 @@ sub_talent_damage_label = []
 talent_level_var = []
 final_stats = FinalStats()
 drew = False
+alpha = 95
 
 # for save selected data
 artifact = [None]*5
 selected_character = None
 selected_weapon = None
 artifact_stat = ArtifactStat()
+save_data = None
 
 # for fetch data from xlsx
 data_file = openpyxl.open('./data/characters_weapons.xlsx')
@@ -387,11 +390,13 @@ def load_talent():
 def set_alpha(value):
     app.attributes('-alpha', float(value) / 100)
     app.update()
+    global alpha
+    alpha = value
 
 
 # draw stats window
 def draw_window():
-    save_data = read_save()
+    global save_data, weapons_data
 
     def row(r):
         return 10 + (r*30)
@@ -408,8 +413,6 @@ def draw_window():
 
     bg_color = '#111111'
     fg_color = '#eeeeee'
-    global weapons_data
-    # weapon_type_var = None
 
     global app
     app = AppTopLevel()
@@ -418,6 +421,7 @@ def draw_window():
     app.option_add("*TCombobox*Listbox*Background", bg_color)
     app.option_add("*TCombobox*Listbox*Foreground", fg_color)
 
+    # save selected data to file
     def save_selected_data():
         selected_character_name = save_data['selected_character']
         if selected_character_name not in save_data['characters']:
@@ -425,37 +429,60 @@ def draw_window():
         save_data['characters'][selected_character_name] = {'level': char_level_var.get(),
                                                             'weapon': weapon_name_var.get(),
                                                             'weapon_level': weapon_level_var.get(),
-                                                            'artifacts': [],
+                                                            'artifacts': artifact,
                                                             'talents_level': []}
         for each_talent_level in talent_level_var:
             save_data['characters'][selected_character_name]['talents_level'].append(each_talent_level.get())
         write_save(save_data)
         print('saved')
 
-    # Select Character
+    # when change character,
+    # 1. load character level
+    # 2. change weapon_name ComboBox
+    # 3.
     def character_change(self):
         global selected_character
         selected_character = get_character_info(char_name_var.get(), char_level_var.get())
         save_data['selected_character'] = char_name_var.get()
 
+        # change the character level's ComboBox if save is found
         if char_name_var.get() in save_data['characters']:
             char_level_var.set(save_data['characters'][char_name_var.get()]['level'])
 
+        # change weapon name ComboBox's value
         _weapons_name = sorted([weapons_data[i][0] for i, _ in enumerate(weapons_data) if weapons_data[i][1] == selected_character.WEAPON_TYPE])
         if char_name_var.get() in save_data['characters']:
             weapon_name_var.set(save_data['characters'][char_name_var.get()]['weapon'])
         elif weapon_name_var.get() not in _weapons_name and len(_weapons_name) > 0:
             weapon_name_var.set(_weapons_name[0])
-        weapon_name_dropdown.config(value=_weapons_name)
+        # weapon_name_dropdown.config(value=_weapons_name)
+
+        # load character's artifact save
+        global artifact
+        if char_name_var.get() in save_data['characters']:
+            artifact = save_data['characters'][char_name_var.get()]['artifacts']
+            for i in range(5):
+                if artifact[i] is not None:
+                    atf_btn[i].configure(state='normal')
+                else:
+                    atf_btn[i].configure(state='disabled')
+        else:
+            artifact = [None]*5
+            load_all_atf()
+
+        # load talent of selected character
         load_talent()
+
+        # refresh weapon ComboBox and it's value to match with character
         weapon_name_changed(self)
 
+    # when change character level, save all data and re-draw the talent damage
     def character_level_change(self):
         save_selected_data()
         draw_talent()
 
     character_label = tk.Label(app)
-    character_label.place(x=10, y=10, height=24)
+    character_label.place(x=10, y=row(0), height=24)
     character_label.configure(text='Character')
     set_color(character_label)
 
@@ -467,7 +494,7 @@ def draw_window():
         char_name_var.set(char_name_choices[0])
     char_name_dropdown = ttk.Combobox(app, textvariable=char_name_var, values=char_name_choices)
     char_name_dropdown.bind('<<ComboboxSelected>>', character_change)
-    char_name_dropdown.place(x=70, y=row(0), width=150, height=24)
+    char_name_dropdown.place(x=70, y=row(0), width=185, height=24)
 
     char_level_choices = char_level_offset
     char_level_var = tk.StringVar(app)
@@ -477,12 +504,15 @@ def draw_window():
         char_level_var.set(char_level_offset[len(char_level_offset) - 1])
     char_level_dropdown = ttk.Combobox(app, textvariable=char_level_var, values=char_level_choices)
     char_level_dropdown.bind('<<ComboboxSelected>>', character_level_change)
-    char_level_dropdown.place(x=230, y=row(0), width=60, height=24)
+    char_level_dropdown.place(x=260, y=row(0), width=78, height=24)
 
+    # change weapon_level ComboBox to match with weapon
+    # load weapon_level
+    # re-draw talent damage
+    # save all selected data
     def weapon_name_changed(self):
         global selected_weapon
         selected_weapon = get_weapon_info(weapon_name_var.get(), weapon_level_var.get())
-
 
         rarity = [weapons_data[i][2] for i, _ in enumerate(weapons_data) if weapons_data[i][0] == weapon_name_var.get()]
         if len(rarity) > 0 and (rarity[0] == 1 or rarity[0] == 2):
@@ -504,7 +534,7 @@ def draw_window():
         draw_talent()
 
     weapon_label = tk.Label(app)
-    weapon_label.place(x=10, y=40, height=24)
+    weapon_label.place(x=10, y=row(1), height=24)
     weapon_label.configure(text='Weapon')
     set_color(weapon_label)
 
@@ -517,7 +547,7 @@ def draw_window():
         weapon_name_var.set(weapon_name_choices[0])
     weapon_name_dropdown = ttk.Combobox(app, textvariable=weapon_name_var, values=weapon_name_choices)
     weapon_name_dropdown.bind('<<ComboboxSelected>>', weapon_name_changed)
-    weapon_name_dropdown.place(x=70, y=row(1), width=150, height=24)
+    weapon_name_dropdown.place(x=70, y=row(1), width=185, height=24)
 
     weapon_level_choices = weapons_level_offset
     weapon_level_var = tk.StringVar(app)
@@ -527,9 +557,26 @@ def draw_window():
         weapon_level_var.set(weapons_level_offset[len(weapons_level_offset) - 1])
     weapon_level_dropdown = ttk.Combobox(app, textvariable=weapon_level_var, values=weapon_level_choices)
     weapon_level_dropdown.bind('<<ComboboxSelected>>', weapon_level_changed)
-    weapon_level_dropdown.place(x=230, y=row(1), width=60, height=24)
+    weapon_level_dropdown.place(x=260, y=row(1), width=78, height=24)
 
-    def calcurate_talent_dmg(talent_value, talent_type):
+    def display_artifact(i):
+        stats_confirm.artifact_confirm(artifact[i], alpha)
+
+    artifact_label = tk.Label(app)
+    artifact_label.place(x=10, y=row(2), height=24)
+    artifact_label.configure(text='Artifact')
+    set_color(artifact_label)
+
+    atf_btn = [None]*5
+    artifact_name = ['Flower', 'Plume', 'Sands', 'Goblet', 'Circlet']
+    for i in range(5):
+        atf_btn[i] = tk.Button(app)
+        atf_btn[i].place(x=70 + (i*55), y=row(2), width=50, height=24)
+        atf_btn[i].configure(text=artifact_name[i], state='disabled')
+        atf_btn[i].configure(command=lambda: display_artifact(i))
+        set_color(atf_btn[i])
+
+    def calculate_talent_dmg(talent_value, talent_type):
         talent_value_add = 0
         talent_value_multi = 1
         dmg_base = final_stats.atk_normal
@@ -637,7 +684,7 @@ def draw_window():
                 set_color(sub_talent_label[last_sub_talent_label])
 
                 # calculate talent's sub damage
-                talent_value = calcurate_talent_dmg(each_sub[1][level], each_sub[1][15])
+                talent_value = calculate_talent_dmg(each_sub[1][level], each_sub[1][15])
 
                 # draw talent's sub damage
                 sub_talent_damage_label.append(tk.Label(app))
@@ -666,7 +713,8 @@ def draw_window():
 
 
 def main():
-    global weapons_data
+    global weapons_data, save_data
     weapons_data = load_weapons_data()
+    save_data = read_save()
     load_all_atf()
     draw_window()
