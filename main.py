@@ -5,6 +5,7 @@ from PIL import ImageTk, Image
 import cv2
 from data import get_text
 import os
+import keyboard
 
 from scan import run
 import stats_confirm
@@ -14,6 +15,35 @@ from class_file.app import AppMain
 
 alpha = 95
 app = None
+toggle = True
+toggle_save = None
+
+
+def toggle_show(self):
+    global app, toggle, toggle_save
+    from time import sleep
+    if toggle:
+        toggle_save = app.winfo_geometry()
+        # app.geometry('0x0')
+        toggle = False
+
+        app.overrideredirect(False)
+        app.iconify()
+        stats_confirm.toggle_show()
+        all_stats_display.toggle_show()
+        while True:
+            if app.state() != 'normal':
+                sleep(0.5)
+
+            else:
+                app.geometry(toggle_save)
+                toggle = True
+                app.deiconify()
+                app.overrideredirect(True)
+                stats_confirm.toggle_show()
+                all_stats_display.toggle_show()
+                break
+
 
 
 def scan(sample=False):
@@ -48,6 +78,7 @@ def main():
     global app
     app = AppMain()
     app.geometry('120x190+10+10')
+    app.title('Genshin Auto Info')
     app.configure(bg=bg_color)
     app.option_add("*TCombobox*Listbox*Background", bg_color)
     app.option_add("*TCombobox*Listbox*Foreground", fg_color)
@@ -109,6 +140,7 @@ def main():
 
 
 if __name__ == '__main__':
+    keyboard.on_press_key("F12", toggle_show)
     main()
 
 

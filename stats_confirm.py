@@ -26,7 +26,7 @@ def artifact_confirm(atf_data, alpha, is_save=False):
         cancel()
 
     def cancel():
-        confirm_window_main.remove(confirm_window)
+        confirm_window_main.remove(list(confirm_window_main[a] for a, cw in enumerate(confirm_window_main) if cw[0] == confirm_window)[0])
         confirm_window.destroy()
 
     def remove_artifact():
@@ -313,7 +313,7 @@ def artifact_confirm(atf_data, alpha, is_save=False):
     asn_dropdown = ttk.Combobox(confirm_window, textvariable=asn_var, values=asn_choices)
     asn_dropdown.place(x=c1x, y=asn_y, width=c1w + c2w + c3w + 12, height=24)
 
-    confirm_window_main.append(confirm_window)
+    confirm_window_main.append([confirm_window, True, confirm_window.winfo_geometry()])
     set_alpha(alpha)
     confirm_window.attributes('-topmost', True)
     confirm_window.mainloop()
@@ -322,8 +322,20 @@ def artifact_confirm(atf_data, alpha, is_save=False):
 def set_alpha(value):
     if confirm_window_main is not []:
         for each in confirm_window_main:
-            each.attributes('-alpha', float(value)/100)
-            each.update()
+            each[0].attributes('-alpha', float(value)/100)
+            each[0].update()
+
+
+def toggle_show():
+    if confirm_window_main is not []:
+        for each in confirm_window_main:
+            if each[1]:
+                each[2] = each[0].winfo_geometry()
+                each[0].geometry('0x0')
+                each[1] = False
+            else:
+                each[0].geometry(each[2])
+                each[1] = True
 
 
 def row(i):
