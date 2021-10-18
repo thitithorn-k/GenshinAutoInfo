@@ -8,13 +8,14 @@ import data
 from data import get_text
 from data import get_keys
 from all_stats_display import change_atf
+from all_stats_display import remove_atf
 
 from class_file.app import AppTopLevel
 
 confirm_window_main = []
 
 
-def artifact_confirm(atf_data, alpha):
+def artifact_confirm(atf_data, alpha, is_save=False):
     return_atf_data = {}
     bg_color = '#111111'
     fg_color = '#eeeeee'
@@ -22,12 +23,15 @@ def artifact_confirm(atf_data, alpha):
     def confirm():
         change_check()
         change_atf(return_atf_data)
-        confirm_window_main.remove(confirm_window)
-        confirm_window.destroy()
+        cancel()
 
     def cancel():
         confirm_window_main.remove(confirm_window)
         confirm_window.destroy()
+
+    def remove_artifact():
+        remove_atf(atf_data['part_name'], atf_data['owner'])
+        cancel()
 
     def change_check():
         # check and add image to dataset
@@ -72,7 +76,8 @@ def artifact_confirm(atf_data, alpha):
         return_atf_data['main_stat_name_img_bw'] = atf_data['main_stat_name_img_bw']
         return_atf_data['sub_stat_name_img_bw'] = atf_data['sub_stat_name_img_bw']
         return_atf_data['asn_img_bw'] = atf_data['asn_img_bw']
-
+        if 'owner' in atf_data:
+            return_atf_data['owner'] = atf_data['owner']
 
     def set_color(obj):
         obj['bg'] = bg_color
@@ -93,7 +98,7 @@ def artifact_confirm(atf_data, alpha):
 
         add_data_window = AppTopLevel()
         add_data_window.title('add data confirm')
-        add_data_window.geometry('300x200')
+        add_data_window.geometry('300x200+500+10')
         add_data_window.configure(bg=bg_color)
 
         add_data_head_label = tk.Label(add_data_window)
@@ -136,7 +141,7 @@ def artifact_confirm(atf_data, alpha):
 
     confirm_window = AppTopLevel()
     confirm_window.title('Artifact status confirmation')
-    confirm_window.geometry(f'650x{(image_h+110) if (image_h+110) > 400 else 390}')
+    confirm_window.geometry(f'650x{(image_h+110) if (image_h+110) > 400 else 390}+500+10')
     confirm_window.configure(bg=bg_color)
     s = ttk.Style()
     s.theme_use('winnative')
@@ -156,9 +161,16 @@ def artifact_confirm(atf_data, alpha):
 
     cancel_btn = tk.Button(confirm_window)
     cancel_btn.place(x=116, y=row(1), width=100, height=24)
-    cancel_btn.configure(text='Return')
+    cancel_btn.configure(text='Cancel')
     cancel_btn.configure(command=cancel)
     set_color(cancel_btn)
+
+    if is_save:
+        remove_btn = tk.Button(confirm_window)
+        remove_btn.place(x=525, y=row(1), width=100, height=24)
+        remove_btn.configure(text='Remove')
+        remove_btn.configure(command=remove_artifact)
+        set_color(remove_btn)
 
     im = Image.fromarray(artifact_status_img_rgb)
     imgtk = ImageTk.PhotoImage(image=im)

@@ -43,6 +43,7 @@ talent_level_var = []
 final_stats = FinalStats()
 drew = False
 alpha = 95
+atf_btn = [None]*5
 
 # for save selected data
 artifact = [None]*5
@@ -128,9 +129,19 @@ def read_save():
         return {'characters': {}}
 
 
+def refresh_atf_btn():
+    global artifact
+    for i in range(5):
+        if artifact[i] is not None:
+            atf_btn[i].configure(state='normal')
+        else:
+            atf_btn[i].configure(state='disabled')
+
+
 def change_atf(atf_data):
     global artifact
     part_name = atf_data['part_name']
+    atf_data['owner'] = selected_character.name
     if part_name == 'flower':
         artifact[0] = atf_data
     elif part_name == 'plume':
@@ -144,6 +155,24 @@ def change_atf(atf_data):
     else:
         print(f'change atf error. part name not match ({part_name})')
     load_all_atf()
+    refresh_atf_btn()
+
+
+def remove_atf(part_name, owner):
+    global artifact
+    if part_name == 'flower':
+        artifact[0] = None
+    elif part_name == 'plume':
+        artifact[1] = None
+    elif part_name == 'sands':
+        artifact[2] = None
+    elif part_name == 'goblet':
+        artifact[3] = None
+    elif part_name == 'circlet':
+        artifact[4] = None
+    save_data['characters'][owner]['artifact'] = artifact
+    write_save(save_data)
+    refresh_atf_btn()
 
 
 def load_all_atf():
@@ -222,7 +251,7 @@ def load_all_atf():
             elif each_sub_name == 'energy':
                 artifact_stat.ER.append(each_sub_value[0]/100)
 
-    artifact_stat.print_log()
+    # artifact_stat.print_log()
     # TODO add artifact effect
 
 
@@ -282,6 +311,7 @@ def calculate_stats():
     global final_stats
     final_stats = FinalStats()
     if artifact_stat is None or selected_weapon is None or selected_character is None:
+        print('calcurate_stats_return')
         return
 
     all_cr = selected_character.CR + selected_weapon.CR + sum(artifact_stat.CR) + cr_bonus
@@ -387,6 +417,81 @@ def load_talent():
             break
 
 
+def calculate_talent_dmg(talent_value, talent_type):
+    talent_value_add = 0
+    talent_value_multi = 1
+    dmg_base = final_stats.atk_normal
+
+    if talent_type in ['e', 'p', 'h', None]:
+        talent_value = talent_value.split('+')
+        if len(talent_value) >= 2:
+            talent_value_add = int(talent_value[1])
+        talent_value = talent_value[0].split('|')
+        if len(talent_value) >= 2:
+            if talent_value[1] == 'DEF':
+                dmg_base = final_stats.def_normal
+            elif talent_value[1] == 'Max HP':
+                dmg_base = final_stats.hp_normal
+            else:
+                print(f'dmg_base error: {talent_value[1]}')
+        talent_value = talent_value[0].split('*')
+        if len(talent_value) >= 2:
+            talent_value_multi = int(talent_value[1])
+        talent_value = talent_value[0].split('&')
+        return_value = []
+        for each_value in talent_value:
+            return_value.append(float(each_value[0:len(each_value) - 1]))
+        talent_value = return_value
+
+        pe_dmg_bonus = 0
+        if talent_type == 'p':
+            pe_dmg_bonus = selected_character.PDMG + sum(artifact_stat.PDMG)
+        elif talent_type == 'e':
+            pe_dmg_bonus = selected_character.EDMG
+            if selected_character.ELEMENTAL == 'Anemo':
+                pe_dmg_bonus += sum(artifact_stat.ANEMO_DMG)
+            elif selected_character.ELEMENTAL == 'Geo':
+                pe_dmg_bonus += sum(artifact_stat.GEO_DMG)
+            elif selected_character.ELEMENTAL == 'Electro':
+                pe_dmg_bonus += sum(artifact_stat.ELECTRO_DMG)
+            elif selected_character.ELEMENTAL == 'Hydro':
+                pe_dmg_bonus += sum(artifact_stat.HYDRPO_DMG_DMG)
+            elif selected_character.ELEMENTAL == 'Pyro':
+                pe_dmg_bonus += sum(artifact_stat.PYRO_DMG_DMG)
+            elif selected_character.ELEMENTAL == 'Cryo':
+                pe_dmg_bonus += sum(artifact_stat.CRYO_DMG_DMG)
+        a = ((100 + selected_character.level) / ((100 + selected_character.level) + ((100 + mon_lv) * (1 + mon_def_debuff))))
+        b = ((max_hp_dmg_bonus * final_stats.hp_normal) * (1 - final_stats.monster_res / 100) * (
+                    (100 + selected_character.level) / ((100 + selected_character.level) + (100 + mon_lv))))
+        temp_value = []
+        for each_value in talent_value:
+            temp_value.append((dmg_base * (1- final_stats.monster_res/100)* a * (each_value/100) + b) * 1 * (1+ all_dmg_bonus + pe_dmg_bonus))
+        talent_value_final = ''
+        for i, each_temp in enumerate(temp_value):
+            talent_value_final += str(round(each_temp) + (int(talent_value_add) if talent_value_add else 0))
+            if i+1 < len(temp_value):
+                talent_value_final += ' + '
+    else:
+        talent_value_final = str(talent_value)
+
+    return talent_value_final
+
+
+def set_color(obj):
+    bg_color = '#111111'
+    fg_color = '#eeeeee'
+    obj['bg'] = bg_color
+    obj['fg'] = fg_color
+    obj['highlightthickness'] = 0
+    if hasattr(obj, 'activebackground'):
+        obj['activebackground'] = bg_color
+        obj['activeforeground'] = fg_color
+
+
+def row(r):
+    return 10 + (r*30)
+
+
 def set_alpha(value):
     app.attributes('-alpha', float(value) / 100)
     app.update()
@@ -394,22 +499,76 @@ def set_alpha(value):
     alpha = value
 
 
+def draw_talent():
+    global talent_name_label, sub_talent_label, talent_level_var
+
+    def talent_change(event, i):
+        save_data['characters'][selected_character.name]['talents_level'][i] = talent_level_var[i].get()
+        write_save(save_data)
+        draw_talent()
+
+    calculate_stats()
+    for each_main in talent_name_label:
+        each_main.destroy()
+    for each_sub in sub_talent_label:
+        each_sub.destroy()
+    for each_sub_dmg in sub_talent_damage_label:
+        each_sub_dmg.destroy()
+    current_row = 3
+
+    talent_level_var.clear()
+    for i, each_talent in enumerate(talent):
+        current_row += 1
+        # draw talent name
+        talent_name_label.append(tk.Label(app))
+        last_talent_name_label = len(talent_name_label)-1
+        talent_name_label[last_talent_name_label].place(x=20, y=row(current_row), height=24)
+        talent_name_label[last_talent_name_label].configure(text=each_talent[0])
+        set_color(talent_name_label[last_talent_name_label])
+
+        talent_level_choices = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+
+        talent_level_var.append(tk.StringVar(app))
+        if selected_character.name in save_data['characters'] and len(save_data['characters'][selected_character.name]['talents_level']) > 0:
+            talent_level_var[i].set(save_data['characters'][selected_character.name]['talents_level'][i])
+        else:
+            talent_level_var[i].set(talent_level_choices[9])
+        talent_level_combobox.append(ttk.Combobox(app, textvariable=talent_level_var[i], values=talent_level_choices))
+        last_talent_level_combobox = len(talent_level_combobox) - 1
+        talent_level_combobox[last_talent_level_combobox].bind('<<ComboboxSelected>>', lambda event, talent_i=i: talent_change(event, talent_i))
+        talent_level_combobox[last_talent_level_combobox].place(x=270, y=row(current_row), width=60, height=24)
+
+        level = int(talent_level_var[i].get()) - 1
+
+        for each_sub in each_talent[1]:
+            # draw talent's sub name
+            current_row += 1
+            sub_talent_label.append(tk.Label(app))
+            last_sub_talent_label = len(sub_talent_label)-1
+            sub_talent_label[last_sub_talent_label].place(x=40, y=row(current_row), height=24)
+            sub_talent_label[last_sub_talent_label].configure(text=f'- {each_sub[0]}')
+            set_color(sub_talent_label[last_sub_talent_label])
+
+            # calculate talent's sub damage
+            talent_value = calculate_talent_dmg(each_sub[1][level], each_sub[1][15])
+
+            # draw talent's sub damage
+            sub_talent_damage_label.append(tk.Label(app))
+            last_sub_talent_damage_label = len(sub_talent_damage_label)-1
+            sub_talent_damage_label[last_sub_talent_damage_label].place(x=230, y=row(current_row), width=100, height=24)
+            sub_talent_damage_label[last_sub_talent_damage_label].configure(text=talent_value, anchor='e', justify=tk.RIGHT)
+            set_color(sub_talent_damage_label[last_sub_talent_damage_label])
+    global drew
+    if not drew:
+        app.geometry(f'350x{row(current_row + 1) + 6}+140+10')
+        drew = True
+    else:
+        app.geometry(f'350x{row(current_row + 1) + 6}+{app.winfo_x()}+{app.winfo_y()}')
+
+
 # draw stats window
 def draw_window():
     global save_data, weapons_data
-
-    def row(r):
-        return 10 + (r*30)
-
-    def set_color(obj):
-        bg_color = '#111111'
-        fg_color = '#eeeeee'
-        obj['bg'] = bg_color
-        obj['fg'] = fg_color
-        obj['highlightthickness'] = 0
-        if hasattr(obj, 'activebackground'):
-            obj['activebackground'] = bg_color
-            obj['activeforeground'] = fg_color
 
     bg_color = '#111111'
     fg_color = '#eeeeee'
@@ -434,12 +593,10 @@ def draw_window():
         for each_talent_level in talent_level_var:
             save_data['characters'][selected_character_name]['talents_level'].append(each_talent_level.get())
         write_save(save_data)
-        print('saved')
 
     # when change character,
     # 1. load character level
     # 2. change weapon_name ComboBox
-    # 3.
     def character_change(self):
         global selected_character
         selected_character = get_character_info(char_name_var.get(), char_level_var.get())
@@ -455,20 +612,17 @@ def draw_window():
             weapon_name_var.set(save_data['characters'][char_name_var.get()]['weapon'])
         elif weapon_name_var.get() not in _weapons_name and len(_weapons_name) > 0:
             weapon_name_var.set(_weapons_name[0])
-        # weapon_name_dropdown.config(value=_weapons_name)
+        weapon_name_combobox.config(value=_weapons_name)
 
         # load character's artifact save
         global artifact
         if char_name_var.get() in save_data['characters']:
             artifact = save_data['characters'][char_name_var.get()]['artifacts']
-            for i in range(5):
-                if artifact[i] is not None:
-                    atf_btn[i].configure(state='normal')
-                else:
-                    atf_btn[i].configure(state='disabled')
+            refresh_atf_btn()
         else:
             artifact = [None]*5
-            load_all_atf()
+            refresh_atf_btn()
+        load_all_atf()
 
         # load talent of selected character
         load_talent()
@@ -478,6 +632,8 @@ def draw_window():
 
     # when change character level, save all data and re-draw the talent damage
     def character_level_change(self):
+        global selected_character
+        selected_character = get_character_info(char_name_var.get(), char_level_var.get())
         save_selected_data()
         draw_talent()
 
@@ -492,9 +648,9 @@ def draw_window():
         char_name_var.set(save_data['selected_character'])
     else:
         char_name_var.set(char_name_choices[0])
-    char_name_dropdown = ttk.Combobox(app, textvariable=char_name_var, values=char_name_choices)
-    char_name_dropdown.bind('<<ComboboxSelected>>', character_change)
-    char_name_dropdown.place(x=70, y=row(0), width=185, height=24)
+    char_name_combobox = ttk.Combobox(app, textvariable=char_name_var, values=char_name_choices)
+    char_name_combobox.bind('<<ComboboxSelected>>', character_change)
+    char_name_combobox.place(x=70, y=row(0), width=185, height=24)
 
     char_level_choices = char_level_offset
     char_level_var = tk.StringVar(app)
@@ -502,9 +658,9 @@ def draw_window():
         char_level_var.set(save_data['characters'][char_name_var.get()]['level'])
     else:
         char_level_var.set(char_level_offset[len(char_level_offset) - 1])
-    char_level_dropdown = ttk.Combobox(app, textvariable=char_level_var, values=char_level_choices)
-    char_level_dropdown.bind('<<ComboboxSelected>>', character_level_change)
-    char_level_dropdown.place(x=260, y=row(0), width=78, height=24)
+    char_level_combobox = ttk.Combobox(app, textvariable=char_level_var, values=char_level_choices)
+    char_level_combobox.bind('<<ComboboxSelected>>', character_level_change)
+    char_level_combobox.place(x=260, y=row(0), width=78, height=24)
 
     # change weapon_level ComboBox to match with weapon
     # load weapon_level
@@ -525,11 +681,13 @@ def draw_window():
         elif weapon_level_var.get() not in weapons_level:
             weapon_level_var.set(weapons_level[len(weapons_level) - 1])
 
-        weapon_level_dropdown.config(value=weapons_level)
+        weapon_level_combobox.config(value=weapons_level)
         draw_talent()
         save_selected_data()
 
     def weapon_level_changed(self):
+        global selected_weapon
+        selected_weapon = get_weapon_info(weapon_name_var.get(), weapon_level_var.get())
         save_selected_data()
         draw_talent()
 
@@ -545,9 +703,9 @@ def draw_window():
         weapon_name_var.set(save_data['characters'][char_name_var.get()]['weapon'])
     else:
         weapon_name_var.set(weapon_name_choices[0])
-    weapon_name_dropdown = ttk.Combobox(app, textvariable=weapon_name_var, values=weapon_name_choices)
-    weapon_name_dropdown.bind('<<ComboboxSelected>>', weapon_name_changed)
-    weapon_name_dropdown.place(x=70, y=row(1), width=185, height=24)
+    weapon_name_combobox = ttk.Combobox(app, textvariable=weapon_name_var, values=weapon_name_choices)
+    weapon_name_combobox.bind('<<ComboboxSelected>>', weapon_name_changed)
+    weapon_name_combobox.place(x=70, y=row(1), width=185, height=24)
 
     weapon_level_choices = weapons_level_offset
     weapon_level_var = tk.StringVar(app)
@@ -555,149 +713,150 @@ def draw_window():
         weapon_level_var.set(save_data['characters'][char_name_var.get()]['weapon_level'])
     else:
         weapon_level_var.set(weapons_level_offset[len(weapons_level_offset) - 1])
-    weapon_level_dropdown = ttk.Combobox(app, textvariable=weapon_level_var, values=weapon_level_choices)
-    weapon_level_dropdown.bind('<<ComboboxSelected>>', weapon_level_changed)
-    weapon_level_dropdown.place(x=260, y=row(1), width=78, height=24)
+    weapon_level_combobox = ttk.Combobox(app, textvariable=weapon_level_var, values=weapon_level_choices)
+    weapon_level_combobox.bind('<<ComboboxSelected>>', weapon_level_changed)
+    weapon_level_combobox.place(x=260, y=row(1), width=78, height=24)
 
     def display_artifact(i):
-        stats_confirm.artifact_confirm(artifact[i], alpha)
+        stats_confirm.artifact_confirm(artifact[i], alpha, True)
 
     artifact_label = tk.Label(app)
     artifact_label.place(x=10, y=row(2), height=24)
     artifact_label.configure(text='Artifact')
     set_color(artifact_label)
 
-    atf_btn = [None]*5
+    global atf_btn
     artifact_name = ['Flower', 'Plume', 'Sands', 'Goblet', 'Circlet']
     for i in range(5):
         atf_btn[i] = tk.Button(app)
         atf_btn[i].place(x=70 + (i*55), y=row(2), width=50, height=24)
         atf_btn[i].configure(text=artifact_name[i], state='disabled')
-        atf_btn[i].configure(command=lambda: display_artifact(i))
+        atf_btn[i].configure(command=lambda atf_i=i: display_artifact(atf_i))
         set_color(atf_btn[i])
 
-    def calculate_talent_dmg(talent_value, talent_type):
-        talent_value_add = 0
-        talent_value_multi = 1
-        dmg_base = final_stats.atk_normal
+    # def calculate_talent_dmg(talent_value, talent_type):
+    #     talent_value_add = 0
+    #     talent_value_multi = 1
+    #     dmg_base = final_stats.atk_normal
+    #
+    #     if talent_type in ['e', 'p', 'h', None]:
+    #         talent_value = talent_value.split('+')
+    #         if len(talent_value) >= 2:
+    #             talent_value_add = int(talent_value[1])
+    #         talent_value = talent_value[0].split('|')
+    #         if len(talent_value) >= 2:
+    #             if talent_value[1] == 'DEF':
+    #                 dmg_base = final_stats.def_normal
+    #             elif talent_value[1] == 'Max HP':
+    #                 dmg_base = final_stats.hp_normal
+    #             else:
+    #                 print(f'dmg_base error: {talent_value[1]}')
+    #         talent_value = talent_value[0].split('*')
+    #         if len(talent_value) >= 2:
+    #             talent_value_multi = int(talent_value[1])
+    #         talent_value = talent_value[0].split('&')
+    #         return_value = []
+    #         for each_value in talent_value:
+    #             return_value.append(float(each_value[0:len(each_value) - 1]))
+    #         talent_value = return_value
+    #
+    #         pe_dmg_bonus = 0
+    #         if talent_type == 'p':
+    #             pe_dmg_bonus = selected_character.PDMG + sum(artifact_stat.PDMG)
+    #         elif talent_type == 'e':
+    #             pe_dmg_bonus = selected_character.EDMG
+    #             if selected_character.ELEMENTAL == 'Anemo':
+    #                 pe_dmg_bonus += sum(artifact_stat.ANEMO_DMG)
+    #             elif selected_character.ELEMENTAL == 'Geo':
+    #                 pe_dmg_bonus += sum(artifact_stat.GEO_DMG)
+    #             elif selected_character.ELEMENTAL == 'Electro':
+    #                 pe_dmg_bonus += sum(artifact_stat.ELECTRO_DMG)
+    #             elif selected_character.ELEMENTAL == 'Hydro':
+    #                 pe_dmg_bonus += sum(artifact_stat.HYDRPO_DMG_DMG)
+    #             elif selected_character.ELEMENTAL == 'Pyro':
+    #                 pe_dmg_bonus += sum(artifact_stat.PYRO_DMG_DMG)
+    #             elif selected_character.ELEMENTAL == 'Cryo':
+    #                 pe_dmg_bonus += sum(artifact_stat.CRYO_DMG_DMG)
+    #         a = ((100 + selected_character.level) / ((100 + selected_character.level) + ((100 + mon_lv) * (1 + mon_def_debuff))))
+    #         b = ((max_hp_dmg_bonus * final_stats.hp_normal) * (1 - final_stats.monster_res / 100) * (
+    #                     (100 + selected_character.level) / ((100 + selected_character.level) + (100 + mon_lv))))
+    #         temp_value = []
+    #         for each_value in talent_value:
+    #             temp_value.append((dmg_base * (1- final_stats.monster_res/100)* a * (each_value/100) + b) * 1 * (1+ all_dmg_bonus + pe_dmg_bonus))
+    #         talent_value_final = ''
+    #         for i, each_temp in enumerate(temp_value):
+    #             talent_value_final += str(round(each_temp) + (int(talent_value_add) if talent_value_add else 0))
+    #             if i+1 < len(temp_value):
+    #                 talent_value_final += ' + '
+    #     else:
+    #         talent_value_final = str(talent_value)
+    #
+    #     return talent_value_final
 
-        if talent_type in ['e', 'p']:
-            talent_value = talent_value.split('+')
-            if len(talent_value) >= 2:
-                talent_value_add = int(talent_value[1])
-            talent_value = talent_value[0].split('|')
-            if len(talent_value) >= 2:
-                if talent_value[1] == 'DEF':
-                    dmg_base = final_stats.def_normal
-                elif talent_value[1] == 'Max HP':
-                    dmg_base = final_stats.hp_normal
-                else:
-                    print(f'dmg_base error: {talent_value[1]}')
-            talent_value = talent_value[0].split('*')
-            if len(talent_value) >= 2:
-                talent_value_multi = int(talent_value[1])
-            talent_value = talent_value[0].split('&')
-            return_value = []
-            for each_value in talent_value:
-                return_value.append(float(each_value[0:len(each_value) - 1]))
-            talent_value = return_value
-
-            if talent_type == 'p':
-                pe_dmg_bonus = selected_character.PDMG + sum(artifact_stat.PDMG)
-            elif talent_type == 'e':
-                pe_dmg_bonus = selected_character.EDMG
-                if selected_character.ELEMENTAL == 'Anemo':
-                    pe_dmg_bonus += sum(artifact_stat.ANEMO_DMG)
-                elif selected_character.ELEMENTAL == 'Geo':
-                    pe_dmg_bonus += sum(artifact_stat.GEO_DMG)
-                elif selected_character.ELEMENTAL == 'Electro':
-                    pe_dmg_bonus += sum(artifact_stat.ELECTRO_DMG)
-                elif selected_character.ELEMENTAL == 'Hydro':
-                    pe_dmg_bonus += sum(artifact_stat.HYDRPO_DMG_DMG)
-                elif selected_character.ELEMENTAL == 'Pyro':
-                    pe_dmg_bonus += sum(artifact_stat.PYRO_DMG_DMG)
-                elif selected_character.ELEMENTAL == 'Cryo':
-                    pe_dmg_bonus += sum(artifact_stat.CRYO_DMG_DMG)
-            a = ((100 + selected_character.level) / ((100 + selected_character.level) + ((100 + mon_lv) * (1 + mon_def_debuff))))
-            b = ((max_hp_dmg_bonus * final_stats.hp_normal) * (1 - final_stats.monster_res / 100) * (
-                        (100 + selected_character.level) / ((100 + selected_character.level) + (100 + mon_lv))))
-            temp_value = []
-            for each_value in talent_value:
-                temp_value.append((dmg_base * (1- final_stats.monster_res/100)* a * (each_value/100) + b) * 1 * (1+ all_dmg_bonus + pe_dmg_bonus))
-            talent_value_final = ''
-            for i, each_temp in enumerate(temp_value):
-                talent_value_final += str(round(each_temp))
-                if i+1 < len(temp_value):
-                    talent_value_final += ' + '
-        else:
-            talent_value_final = str(talent_value)
-
-        return talent_value_final
-
-    def draw_talent():
-        global talent_name_label, sub_talent_label, talent_level_var
-
-        def talent_change(self):
-            save_selected_data()
-            draw_talent()
-
-        calculate_stats()
-        for each_main in talent_name_label:
-            each_main.destroy()
-        for each_sub in sub_talent_label:
-            each_sub.destroy()
-        for each_sub_dmg in sub_talent_damage_label:
-            each_sub_dmg.destroy()
-        current_row = 3
-
-        talent_level_var.clear()
-        for i, each_talent in enumerate(talent):
-            current_row += 1
-            # draw talent name
-            talent_name_label.append(tk.Label(app))
-            last_talent_name_label = len(talent_name_label)-1
-            talent_name_label[last_talent_name_label].place(x=20, y=row(current_row), height=24)
-            talent_name_label[last_talent_name_label].configure(text=each_talent[0])
-            set_color(talent_name_label[last_talent_name_label])
-
-            talent_level_choices = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-
-            talent_level_var.append(tk.StringVar(app))
-            if char_name_var.get() in save_data['characters'] and len(save_data['characters'][char_name_var.get()]['talents_level']) > 0:
-                talent_level_var[i].set(save_data['characters'][char_name_var.get()]['talents_level'][i])
-            else:
-                talent_level_var[i].set(talent_level_choices[9])
-            talent_level_combobox.append(ttk.Combobox(app, textvariable=talent_level_var[i], values=talent_level_choices))
-            last_talent_level_combobox = len(talent_level_combobox) - 1
-            talent_level_combobox[last_talent_level_combobox].bind('<<ComboboxSelected>>', talent_change)
-            talent_level_combobox[last_talent_level_combobox].place(x=270, y=row(current_row), width=60, height=24)
-
-            level = int(talent_level_var[i].get()) - 1
-
-            for each_sub in each_talent[1]:
-                # draw talent's sub name
-                current_row += 1
-                sub_talent_label.append(tk.Label(app))
-                last_sub_talent_label = len(sub_talent_label)-1
-                sub_talent_label[last_sub_talent_label].place(x=40, y=row(current_row), height=24)
-                sub_talent_label[last_sub_talent_label].configure(text=f'- {each_sub[0]}')
-                set_color(sub_talent_label[last_sub_talent_label])
-
-                # calculate talent's sub damage
-                talent_value = calculate_talent_dmg(each_sub[1][level], each_sub[1][15])
-
-                # draw talent's sub damage
-                sub_talent_damage_label.append(tk.Label(app))
-                last_sub_talent_damage_label = len(sub_talent_damage_label)-1
-                sub_talent_damage_label[last_sub_talent_damage_label].place(x=230, y=row(current_row), width=100, height=24)
-                sub_talent_damage_label[last_sub_talent_damage_label].configure(text=talent_value, anchor='e', justify=tk.RIGHT)
-                set_color(sub_talent_damage_label[last_sub_talent_damage_label])
-        global drew
-        if not drew:
-            app.geometry(f'350x{row(current_row + 1) + 6}+140+10')
-            drew = True
-        else:
-            app.geometry(f'350x{row(current_row + 1) + 6}+{app.winfo_x()}+{app.winfo_y()}')
+    # def draw_talent():
+    #     global talent_name_label, sub_talent_label, talent_level_var
+    #
+    #     def talent_change(self):
+    #         save_selected_data()
+    #         draw_talent()
+    #
+    #     calculate_stats()
+    #     for each_main in talent_name_label:
+    #         each_main.destroy()
+    #     for each_sub in sub_talent_label:
+    #         each_sub.destroy()
+    #     for each_sub_dmg in sub_talent_damage_label:
+    #         each_sub_dmg.destroy()
+    #     current_row = 3
+    #
+    #     talent_level_var.clear()
+    #     for i, each_talent in enumerate(talent):
+    #         current_row += 1
+    #         # draw talent name
+    #         talent_name_label.append(tk.Label(app))
+    #         last_talent_name_label = len(talent_name_label)-1
+    #         talent_name_label[last_talent_name_label].place(x=20, y=row(current_row), height=24)
+    #         talent_name_label[last_talent_name_label].configure(text=each_talent[0])
+    #         set_color(talent_name_label[last_talent_name_label])
+    #
+    #         talent_level_choices = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    #
+    #         talent_level_var.append(tk.StringVar(app))
+    #         if char_name_var.get() in save_data['characters'] and len(save_data['characters'][char_name_var.get()]['talents_level']) > 0:
+    #             talent_level_var[i].set(save_data['characters'][char_name_var.get()]['talents_level'][i])
+    #         else:
+    #             talent_level_var[i].set(talent_level_choices[9])
+    #         talent_level_combobox.append(ttk.Combobox(app, textvariable=talent_level_var[i], values=talent_level_choices))
+    #         last_talent_level_combobox = len(talent_level_combobox) - 1
+    #         talent_level_combobox[last_talent_level_combobox].bind('<<ComboboxSelected>>', talent_change)
+    #         talent_level_combobox[last_talent_level_combobox].place(x=270, y=row(current_row), width=60, height=24)
+    #
+    #         level = int(talent_level_var[i].get()) - 1
+    #
+    #         for each_sub in each_talent[1]:
+    #             # draw talent's sub name
+    #             current_row += 1
+    #             sub_talent_label.append(tk.Label(app))
+    #             last_sub_talent_label = len(sub_talent_label)-1
+    #             sub_talent_label[last_sub_talent_label].place(x=40, y=row(current_row), height=24)
+    #             sub_talent_label[last_sub_talent_label].configure(text=f'- {each_sub[0]}')
+    #             set_color(sub_talent_label[last_sub_talent_label])
+    #
+    #             # calculate talent's sub damage
+    #             talent_value = calculate_talent_dmg(each_sub[1][level], each_sub[1][15])
+    #
+    #             # draw talent's sub damage
+    #             sub_talent_damage_label.append(tk.Label(app))
+    #             last_sub_talent_damage_label = len(sub_talent_damage_label)-1
+    #             sub_talent_damage_label[last_sub_talent_damage_label].place(x=230, y=row(current_row), width=100, height=24)
+    #             sub_talent_damage_label[last_sub_talent_damage_label].configure(text=talent_value, anchor='e', justify=tk.RIGHT)
+    #             set_color(sub_talent_damage_label[last_sub_talent_damage_label])
+    #     global drew
+    #     if not drew:
+    #         app.geometry(f'350x{row(current_row + 1) + 6}+140+10')
+    #         drew = True
+    #     else:
+    #         app.geometry(f'350x{row(current_row + 1) + 6}+{app.winfo_x()}+{app.winfo_y()}')
 
     # refresh weapon name and talent
     character_change(None)
