@@ -28,6 +28,8 @@ class AppTopLevel(tk.Toplevel):
         self._offsety = 0
         self.bind('<Button-3>', self.clickwin)
         self.bind('<B3-Motion>', self.dragwin)
+        self.bind('<Button-1>', self.clickwin)
+        self.bind('<B1-Motion>', self.dragwin)
 
     def dragwin(self, event):
         x = self.winfo_pointerx() - self._offsetx

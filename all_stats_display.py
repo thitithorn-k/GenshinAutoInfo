@@ -11,11 +11,11 @@ from class_file.character import Character
 from class_file.weapon import Weapon
 from class_file.filnal_stats import FinalStats
 from class_file.app import AppTopLevel
+from class_file.tooltip import create_tool_tip
 import stats_confirm
 
 app = None
 toggle = True
-toggle_save = None
 
 # for setting stats
 atk_flat_bonus = 0
@@ -174,6 +174,7 @@ def remove_atf(part_name, owner):
         artifact[4] = None
     save_data['characters'][owner]['artifact'] = artifact
     write_save(save_data)
+    load_all_atf()
     refresh_atf_btn()
 
 
@@ -252,8 +253,8 @@ def load_all_atf():
                 artifact_stat.EM.append(each_sub_value[0])
             elif each_sub_name == 'energy':
                 artifact_stat.ER.append(each_sub_value[0]/100)
-
-    # artifact_stat.print_log()
+    draw_talent()
+    artifact_stat.print_log()
     # TODO add artifact effect
 
 
@@ -271,7 +272,7 @@ def load_weapons_data():
 
 def get_character_info(char_name, level):
     characters = data_file['Characters']
-    row = 2 + (character_name.index(char_name)*16) + char_level_offset.index(level)
+    char_row = 2 + (character_name.index(char_name)*16) + char_level_offset.index(level)
     stats = []
     stat_offset = [
         'C', 'D', 'E', 'F', 'G', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'W', 'X', 'Y', 'H'
@@ -282,7 +283,7 @@ def get_character_info(char_name, level):
         elif each_stat == 'X' or each_stat == 'Y':
             value = characters[f'X{2 + (character_name.index(char_name)*16)}'].value
         else:
-            value = characters[f'{each_stat}{row}'].value
+            value = characters[f'{each_stat}{char_row}'].value
         if value is None:
             value = 0
         stats.append(value)
@@ -294,12 +295,12 @@ def get_character_info(char_name, level):
 def get_weapon_info(weapon_name, weapon_level):
     weapons = data_file['Weapons']
     global weapons_data
-    row = list(weapons_data[i][3] for i, each_weapon_data in enumerate(weapons_data) if each_weapon_data[0] == weapon_name)[0]
-    row = int(row) + weapons_level_offset.index(weapon_level)
+    weapon_row = list(weapons_data[i][3] for i, each_weapon_data in enumerate(weapons_data) if each_weapon_data[0] == weapon_name)[0]
+    weapon_row = int(weapon_row) + weapons_level_offset.index(weapon_level)
     weapon_stat_column = ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M']
     weapon_d = []
     for each_column in weapon_stat_column:
-        value = weapons[f'{each_column}{row}'].value
+        value = weapons[f'{each_column}{weapon_row}'].value
         if value is None:
             value = 0
         if each_column not in ['E', 'K']:
@@ -372,23 +373,23 @@ def calculate_stats():
                  (1-mon_res/100) * \
                  (1 + ((1600 * final_stats.em / (2000 + final_stats.em)) / 100) + reaction_dmg_bonus)
 
-    # print(f'ATK normal final: {final_stats.atk_normal}\n'
-    #       f'ATK average final: {final_stats.atk_average}\n'
-    #       f'ATK critical final: {final_stats.atk_critical}')
-    # print(f'Monster RES final: {final_stats.monster_res}')
-    # print(f'DEF normal final: {final_stats.def_normal}\n'
-    #       f'DEF average final: {final_stats.def_average}\n'
-    #       f'DEF critical final: {final_stats.def_critical}')
-    # print(f'HP normal final: {final_stats.hp_normal}\n'
-    #       f'HP average final: {final_stats.hp_average}\n'
-    #       f'HP critical final: {final_stats.hp_critical}')
-    # print(f'Elemental Mastery final: {final_stats.em}')
-    # print(f'Energy Recharge final: {final_stats.er}')
-    # print(f'overloaded: {final_stats.overloaded}\n'
-    #       f'electrocharged: {final_stats.electrocharged}\n'
-    #       f'swirl: {final_stats.swirl}\n'
-    #       f'shatter: {final_stats.shatter}\n'
-    #       f'superconduct: {final_stats.superconduct}')
+    print(f'ATK normal final: {final_stats.atk_normal}\n'
+          f'ATK average final: {final_stats.atk_average}\n'
+          f'ATK critical final: {final_stats.atk_critical}')
+    print(f'Monster RES final: {final_stats.monster_res}')
+    print(f'DEF normal final: {final_stats.def_normal}\n'
+          f'DEF average final: {final_stats.def_average}\n'
+          f'DEF critical final: {final_stats.def_critical}')
+    print(f'HP normal final: {final_stats.hp_normal}\n'
+          f'HP average final: {final_stats.hp_average}\n'
+          f'HP critical final: {final_stats.hp_critical}')
+    print(f'Elemental Mastery final: {final_stats.em}')
+    print(f'Energy Recharge final: {final_stats.er}')
+    print(f'overloaded: {final_stats.overloaded}\n'
+          f'electrocharged: {final_stats.electrocharged}\n'
+          f'swirl: {final_stats.swirl}\n'
+          f'shatter: {final_stats.shatter}\n'
+          f'superconduct: {final_stats.superconduct}')
 
 
 def load_talent():
@@ -423,6 +424,8 @@ def calculate_talent_dmg(talent_value, talent_type):
     talent_value_add = 0
     talent_value_multi = 1
     dmg_base = final_stats.atk_normal
+    dmg_base_crit = final_stats.atk_critical
+    dmg_base_average = final_stats.atk_average
 
     if talent_type in ['e', 'p', 'h', None]:
         talent_value = talent_value.split('+')
@@ -432,8 +435,12 @@ def calculate_talent_dmg(talent_value, talent_type):
         if len(talent_value) >= 2:
             if talent_value[1] == 'DEF':
                 dmg_base = final_stats.def_normal
+                dmg_base_crit = final_stats.def_critical
+                dmg_base_average = final_stats.def_average
             elif talent_value[1] == 'Max HP':
                 dmg_base = final_stats.hp_normal
+                dmg_base_crit = final_stats.hp_critical
+                dmg_base_average = final_stats.hp_average
             else:
                 print(f'dmg_base error: {talent_value[1]}')
         talent_value = talent_value[0].split('*')
@@ -466,15 +473,38 @@ def calculate_talent_dmg(talent_value, talent_type):
         b = ((max_hp_dmg_bonus * final_stats.hp_normal) * (1 - final_stats.monster_res / 100) * (
                     (100 + selected_character.level) / ((100 + selected_character.level) + (100 + mon_lv))))
         temp_value = []
+        temp_crit_value = []
+        temp_average_value = []
         for each_value in talent_value:
             temp_value.append((dmg_base * (1- final_stats.monster_res/100)* a * (each_value/100) + b) * 1 * (1+ all_dmg_bonus + pe_dmg_bonus))
-        talent_value_final = ''
+            temp_crit_value.append((dmg_base_crit * (1 - final_stats.monster_res / 100) * a * (each_value / 100) + b) * 1 * (
+                        1 + all_dmg_bonus + pe_dmg_bonus))
+            temp_average_value.append((dmg_base_average * (1 - final_stats.monster_res / 100) * a * (each_value / 100) + b) * 1 * (
+                        1 + all_dmg_bonus + pe_dmg_bonus))
+        talent_value_final = [None]*3
         for i, each_temp in enumerate(temp_value):
-            talent_value_final += str(round(each_temp) + (int(talent_value_add) if talent_value_add else 0))
+            talent_value_final[0] = ''
+            talent_value_final[0] += str(round(each_temp) + (int(talent_value_add) if talent_value_add else 0))
             if i+1 < len(temp_value):
-                talent_value_final += ' + '
+                talent_value_final[0] += ' + '
+        for i, each_temp in enumerate(temp_crit_value):
+            talent_value_final[1] = ''
+            talent_value_final[1] += str(round(each_temp) + (int(talent_value_add) if talent_value_add else 0))
+            if i+1 < len(temp_value):
+                talent_value_final[1] += ' + '
+        for i, each_temp in enumerate(temp_average_value):
+            talent_value_final[2] = ''
+            talent_value_final[2] += str(round(each_temp) + (int(talent_value_add) if talent_value_add else 0))
+            if i+1 < len(temp_value):
+                talent_value_final[2] += ' + '
+    elif talent_type in ['n_bonus']:
+        # TODO make n_bonus works
+        talent_value_final = 'under_dev'
     else:
-        talent_value_final = str(talent_value)
+        talent_value_final = [None]*3
+        talent_value_final[0] = str(talent_value)
+        talent_value_final[1] = str(talent_value)
+        talent_value_final[2] = str(talent_value)
 
     return talent_value_final
 
@@ -502,18 +532,22 @@ def set_alpha(value):
 
 
 def toggle_show():
-    global app, toggle, toggle_save
+    global app, toggle
     if toggle:
-        toggle_save = app.winfo_geometry()
-        app.geometry('0x0')
+        app.withdraw()
         toggle = False
     else:
-        app.geometry(toggle_save)
+        app.deiconify()
         toggle = True
 
 
 def draw_talent():
-    global talent_name_label, sub_talent_label, talent_level_var
+    global talent_name_label, sub_talent_label, talent_level_var, talent_level_combobox
+
+    try:
+        print(selected_character.level)
+    except:
+        pass
 
     def talent_change(event, i):
         save_data['characters'][selected_character.name]['talents_level'][i] = talent_level_var[i].get()
@@ -527,8 +561,12 @@ def draw_talent():
         each_sub.destroy()
     for each_sub_dmg in sub_talent_damage_label:
         each_sub_dmg.destroy()
-    current_row = 3
+    for each_combobox in talent_level_combobox:
+        each_combobox.destroy()
+    current_row = 4
 
+    if talent is None:
+        return
     talent_level_var.clear()
     for i, each_talent in enumerate(talent):
         current_row += 1
@@ -549,7 +587,7 @@ def draw_talent():
         talent_level_combobox.append(ttk.Combobox(app, textvariable=talent_level_var[i], values=talent_level_choices))
         last_talent_level_combobox = len(talent_level_combobox) - 1
         talent_level_combobox[last_talent_level_combobox].bind('<<ComboboxSelected>>', lambda event, talent_i=i: talent_change(event, talent_i))
-        talent_level_combobox[last_talent_level_combobox].place(x=270, y=row(current_row), width=60, height=24)
+        talent_level_combobox[last_talent_level_combobox].place(x=276, y=row(current_row), width=60, height=24)
 
         level = int(talent_level_var[i].get()) - 1
 
@@ -568,15 +606,17 @@ def draw_talent():
             # draw talent's sub damage
             sub_talent_damage_label.append(tk.Label(app))
             last_sub_talent_damage_label = len(sub_talent_damage_label)-1
-            sub_talent_damage_label[last_sub_talent_damage_label].place(x=230, y=row(current_row), width=100, height=24)
-            sub_talent_damage_label[last_sub_talent_damage_label].configure(text=talent_value, anchor='e', justify=tk.RIGHT)
+            sub_talent_damage_label[last_sub_talent_damage_label].place(x=238, y=row(current_row), width=100, height=24)
+            sub_talent_damage_label[last_sub_talent_damage_label].configure(text=' | '.join(talent_value), anchor='e', justify=tk.RIGHT)
             set_color(sub_talent_damage_label[last_sub_talent_damage_label])
+            create_tool_tip(sub_talent_damage_label[last_sub_talent_damage_label], text=f'normal dmg: {talent_value[0]} | critical dmg: {talent_value[1]} | average dmg: {talent_value[2]}')
     global drew
     if not drew:
         app.geometry(f'350x{row(current_row + 1) + 6}+140+10')
         drew = True
     else:
-        app.geometry(f'350x{row(current_row + 1) + 6}+{app.winfo_x()}+{app.winfo_y()}')
+        # app.geometry(f'350x{row(current_row + 1) + 6}+{app.winfo_x()}+{app.winfo_y()}')
+        app.geometry(f'350x{row(current_row + 1) + 6}')
 
 
 # draw stats window
@@ -603,6 +643,9 @@ def draw_window():
                                                             'weapon_level': weapon_level_var.get(),
                                                             'artifacts': artifact,
                                                             'talents_level': []}
+        if 'mon_res' not in save_data:
+            save_data['mon_res'] = mon_res
+            save_data['mon_lv'] = mon_lv
         for each_talent_level in talent_level_var:
             save_data['characters'][selected_character_name]['talents_level'].append(each_talent_level.get())
         write_save(save_data)
@@ -611,9 +654,9 @@ def draw_window():
     # 1. load character level
     # 2. change weapon_name ComboBox
     def character_change(self):
+
         global selected_character
         selected_character = get_character_info(char_name_var.get(), char_level_var.get())
-        save_data['selected_character'] = char_name_var.get()
 
         # change the character level's ComboBox if save is found
         if char_name_var.get() in save_data['characters']:
@@ -637,6 +680,10 @@ def draw_window():
             refresh_atf_btn()
         load_all_atf()
 
+        # change selected character
+        selected_character = get_character_info(char_name_var.get(), char_level_var.get())
+        save_data['selected_character'] = char_name_var.get()
+
         # load talent of selected character
         load_talent()
 
@@ -647,6 +694,7 @@ def draw_window():
     def character_level_change(self):
         global selected_character
         selected_character = get_character_info(char_name_var.get(), char_level_var.get())
+
         save_selected_data()
         draw_talent()
 
@@ -680,9 +728,6 @@ def draw_window():
     # re-draw talent damage
     # save all selected data
     def weapon_name_changed(self):
-        global selected_weapon
-        selected_weapon = get_weapon_info(weapon_name_var.get(), weapon_level_var.get())
-
         rarity = [weapons_data[i][2] for i, _ in enumerate(weapons_data) if weapons_data[i][0] == weapon_name_var.get()]
         if len(rarity) > 0 and (rarity[0] == 1 or rarity[0] == 2):
             weapons_level = weapons_level_offset[0:19]
@@ -695,14 +740,19 @@ def draw_window():
             weapon_level_var.set(weapons_level[len(weapons_level) - 1])
 
         weapon_level_combobox.config(value=weapons_level)
+
+        global selected_weapon
+        selected_weapon = get_weapon_info(weapon_name_var.get(), weapon_level_var.get())
+
         draw_talent()
         save_selected_data()
 
     def weapon_level_changed(self):
         global selected_weapon
         selected_weapon = get_weapon_info(weapon_name_var.get(), weapon_level_var.get())
-        save_selected_data()
+
         draw_talent()
+        save_selected_data()
 
     weapon_label = tk.Label(app)
     weapon_label.place(x=10, y=row(1), height=24)
@@ -747,11 +797,104 @@ def draw_window():
         atf_btn[i].configure(command=lambda atf_i=i: display_artifact(atf_i))
         set_color(atf_btn[i])
 
+    def monster_res_change():
+        def set_monster_res():
+            global mon_res
+            try:
+                mon_res = int(monster_res_text.get(1.0, tk.END))
+                save_data['mon_res'] = mon_res
+                print(f'mon_res= {mon_res}')
+            except:
+                pass
+            monster_res_text.destroy()
+            monster_res_confirm_btn.destroy()
+
+            nonlocal monster_res_btn
+            monster_res_btn = tk.Button(app)
+            monster_res_btn.place(x=90, y=row(3), width=70, height=24)
+            monster_res_btn.configure(text=int(mon_res), command=monster_res_change)
+            set_color(monster_res_btn)
+            write_save(save_data)
+            draw_talent()
+
+        monster_res_btn.destroy()
+
+        monster_res_text = tk.Text(app)
+        monster_res_text.place(x=90, y=row(3), width=35, height=24)
+        monster_res_text.insert(1.0, int(mon_res))
+        monster_res_text.configure(pady=5)
+        set_color(monster_res_text)
+
+        monster_res_confirm_btn = tk.Button(app)
+        monster_res_confirm_btn.place(x=130, y=row(3), width=30, height=24)
+        monster_res_confirm_btn.configure(text='Set', command=set_monster_res)
+        set_color(monster_res_confirm_btn)
+
+    def monster_lv_change():
+        def set_monster_lv():
+            global mon_lv
+            try:
+                mon_lv = int(monster_lv_text.get(1.0, tk.END))
+                save_data['mon_lv'] = mon_lv
+                print(f'mon_lv= {mon_lv}')
+            except:
+                pass
+            monster_lv_text.destroy()
+            monster_lv_confirm_btn.destroy()
+
+            nonlocal monster_lv_btn
+            monster_lv_btn = tk.Button(app)
+            monster_lv_btn.place(x=268, y=row(3), width=70, height=24)
+            monster_lv_btn.configure(text=int(mon_lv), command=monster_lv_change)
+            set_color(monster_lv_btn)
+            write_save(save_data)
+            draw_talent()
+
+        monster_lv_btn.destroy()
+
+        monster_lv_text = tk.Text(app)
+        monster_lv_text.place(x=268, y=row(3), width=35, height=24)
+        monster_lv_text.insert(1.0, int(mon_lv))
+        monster_lv_text.configure(pady=5)
+        set_color(monster_lv_text)
+
+        monster_lv_confirm_btn = tk.Button(app)
+        monster_lv_confirm_btn.place(x=303, y=row(3), width=30, height=24)
+        monster_lv_confirm_btn.configure(text='Set', command=set_monster_lv)
+        set_color(monster_lv_confirm_btn)
+
+    global mon_res, mon_lv
+    if 'mon_res' in save_data:
+        mon_res = save_data['mon_res']
+        mon_lv = save_data['mon_lv']
+
+    monster_res_label = tk.Label(app)
+    monster_res_label.place(x=10, y=row(3), height=24)
+    monster_res_label.configure(text='Monster RES')
+    set_color(monster_res_label)
+
+    monster_res_btn = tk.Button(app)
+    monster_res_btn.place(x=90, y=row(3), width=70, height=24)
+    monster_res_btn.configure(text=int(mon_res), command=monster_res_change)
+    set_color(monster_res_btn)
+
+    monster_lv_label = tk.Label(app)
+    monster_lv_label.place(x=180, y=row(3), height=24)
+    monster_lv_label.configure(text='Monster Level')
+    set_color(monster_lv_label)
+
+    monster_lv_btn = tk.Button(app)
+    monster_lv_btn.place(x=268, y=row(3), width=70, height=24)
+    monster_lv_btn.configure(text=int(mon_lv), command=monster_lv_change)
+    set_color(monster_lv_btn)
+
+    app.geometry(f'350x200+140+10')
+
     # refresh weapon name and talent
     character_change(None)
 
     talent_label = tk.Label(app)
-    talent_label.place(x=10, y=row(3), height=24)
+    talent_label.place(x=10, y=row(4), height=24)
     talent_label.configure(text='Talent Damage', font=('TkDefaultFont', 12))
     set_color(talent_label)
 

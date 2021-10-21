@@ -34,7 +34,6 @@ def toggle_show(self):
         while True:
             if app.state() != 'normal':
                 sleep(0.5)
-
             else:
                 app.geometry(toggle_save)
                 toggle = True

@@ -215,6 +215,7 @@ def artifact_confirm(atf_data, alpha, is_save=False):
     main_stat_value_text = tk.Text(confirm_window)
     main_stat_value_text.place(x=c2x, y=row(4), width=c2w, height=24)
     main_stat_value_text.insert(1.0, atf_data['main_stat_value'][0])
+    main_stat_value_text.configure(pady=5)
     set_color(main_stat_value_text)
 
     main_stat_value_percent_choices = ['Point', '%']
@@ -282,6 +283,7 @@ def artifact_confirm(atf_data, alpha, is_save=False):
             sub_stat_value_text[i].insert(1.0, atf_data['sub_stat_value'][i][0])
         else:
             sub_stat_value_text[i].insert(1.0, 0)
+        sub_stat_value_text[i].configure(pady=5)
         set_color(sub_stat_value_text[i])
 
         sub_stat_value_percent_choices = ['Point', '%']
@@ -313,7 +315,7 @@ def artifact_confirm(atf_data, alpha, is_save=False):
     asn_dropdown = ttk.Combobox(confirm_window, textvariable=asn_var, values=asn_choices)
     asn_dropdown.place(x=c1x, y=asn_y, width=c1w + c2w + c3w + 12, height=24)
 
-    confirm_window_main.append([confirm_window, True, confirm_window.winfo_geometry()])
+    confirm_window_main.append([confirm_window, True])
     set_alpha(alpha)
     confirm_window.attributes('-topmost', True)
     confirm_window.mainloop()
@@ -330,11 +332,10 @@ def toggle_show():
     if confirm_window_main is not []:
         for each in confirm_window_main:
             if each[1]:
-                each[2] = each[0].winfo_geometry()
-                each[0].geometry('0x0')
+                each[0].withdraw()
                 each[1] = False
             else:
-                each[0].geometry(each[2])
+                each[0].deiconify()
                 each[1] = True
 
 
