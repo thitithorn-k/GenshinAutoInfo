@@ -1,7 +1,7 @@
 class Character:
-    def __init__(self, name, HP, ATK, DEF, CR, CD, ATK_p, EM, HP_p, DEF_p,
+    def __init__(self, name, HP, ATK, DEF, CR, CD, lv, ATK_p, EM, HP_p, DEF_p,
                  HEAL, PDMG, EDMG, BSCONDUCT, BOVERLOAD, BELECTROCH, BSWIRL,
-                 BSHATTER, BCRYSTALIZE, ER, WEAPON_TYPE, ELEMENTAL, lv):
+                 BSHATTER, BCRYSTALIZE, ER, WEAPON_TYPE, ELEMENTAL):
         self.name = name
         self.HP = HP  # 0
         self.ATK = ATK  # 1

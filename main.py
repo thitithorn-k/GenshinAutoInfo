@@ -10,8 +10,11 @@ import keyboard
 from scan import run
 import stats_confirm
 import all_stats_display
+import condition_option
 
 from class_file.app import AppMain
+
+from function.set_widget_color import set_color, bg_color, fg_color
 
 alpha = 95
 app = None
@@ -44,7 +47,6 @@ def toggle_show(self):
                 break
 
 
-
 def scan(sample=False):
     im = run(sample)
     if type(im) is int:
@@ -71,8 +73,7 @@ def main():
         app.update()
         stats_confirm.set_alpha(value)
         all_stats_display.set_alpha(value)
-    bg_color = '#111111'
-    fg_color = '#eeeeee'
+        condition_option.set_alpha(value)
 
     global app
     app = AppMain()
@@ -92,36 +93,31 @@ def main():
     head_label = tk.Label(app)
     head_label.place(x=10, y=10, width=100, height=24)
     head_label.configure(text='Genshin Auto Info')
-    head_label.configure(bg=bg_color)
-    head_label.configure(fg=fg_color)
+    set_color(head_label)
 
     run_btn = tk.Button(app)
     run_btn.place(x=10, y=40, width=100, height=24)
     run_btn.configure(text=get_text('scan'))
     run_btn.configure(command=scan)
-    run_btn.configure(bg=bg_color)
-    run_btn.configure(fg=fg_color)
+    set_color(run_btn)
 
     run_sample_btn = tk.Button(app)
     run_sample_btn.place(x=10, y=70, width=100, height=24)
     run_sample_btn.configure(text=get_text('scan_sam'))
     run_sample_btn.configure(command=scan_sample)
-    run_sample_btn.configure(bg=bg_color)
-    run_sample_btn.configure(fg=fg_color)
+    set_color(run_sample_btn)
 
     about_btn = tk.Button(app)
     about_btn.place(x=10, y=100, width=100, height=24)
     about_btn.configure(text=get_text('about'))
     # about_btn.configure(command=scan_sample)
-    about_btn.configure(bg=bg_color)
-    about_btn.configure(fg=fg_color)
+    set_color(about_btn)
 
     close_btn = tk.Button(app)
     close_btn.place(x=10, y=130, width=100, height=24)
     close_btn.configure(text=get_text('close'))
     close_btn.configure(command=exit_program)
-    close_btn.configure(bg=bg_color)
-    close_btn.configure(fg=fg_color)
+    set_color(close_btn)
 
     alpha_set_scale = ttk.Scale(app, from_=30, to=100)
     alpha_set_scale.place(x=10, y=160, width=100)

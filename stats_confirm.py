@@ -12,6 +12,8 @@ from all_stats_display import remove_atf
 
 from class_file.app import AppTopLevel
 
+from function.set_widget_color import set_color
+
 confirm_window_main = []
 
 
@@ -21,7 +23,9 @@ def artifact_confirm(atf_data, alpha, is_save=False):
     fg_color = '#eeeeee'
 
     def confirm():
+        print('11111')
         change_check()
+        print('222222')
         change_atf(return_atf_data)
         cancel()
 
@@ -34,23 +38,6 @@ def artifact_confirm(atf_data, alpha, is_save=False):
         cancel()
 
     def change_check():
-        # check and add image to dataset
-        if part_name_var.get() != atf_data['part_name']:
-            add_to_data(atf_data['part_name_img_bw'], 'part_img_set', 'part_name', part_name_var.get())
-
-        if get_keys(main_stat_name_var.get()) != atf_data['main_stat_name']:
-            add_to_data(atf_data['main_stat_name_img_bw'], 'main_stat_img_set', 'main_stat_name', get_keys(main_stat_name_var.get()))
-
-        if star_var.get() != atf_data['star']:
-            pass
-        if level_var.get() != atf_data['level']:
-            pass
-        for i, each_sub in enumerate(atf_data['sub_stat_name']):
-            if get_keys(sub_stat_name_var[i].get()) != each_sub:
-                add_to_data(atf_data['sub_stat_name_img_bw'][i], 'sub_stat_img_set', 'sub_stat_name', get_keys(sub_stat_name_var[i].get()))
-        if asn_var.get() != atf_data['asn_name']:
-            add_to_data(atf_data['asn_img_bw'], 'artifact_set_img_set', 'artifact_set_name', asn_var.get())
-
         # check data error
         return_atf_data['star'] = star_var.get()
         return_atf_data['level'] = level_var.get()
@@ -79,26 +66,41 @@ def artifact_confirm(atf_data, alpha, is_save=False):
         if 'owner' in atf_data:
             return_atf_data['owner'] = atf_data['owner']
 
-    def set_color(obj):
-        obj['bg'] = bg_color
-        obj['fg'] = fg_color
-        obj['highlightthickness'] = 0
-        if hasattr(obj, 'activebackground'):
-            obj['activebackground'] = bg_color
-            obj['activeforeground'] = fg_color
+        # check and add image to dataset
+        if part_name_var.get() != atf_data['part_name']:
+            add_to_data(atf_data['part_name_img_bw'], 'part_img_set', 'part_name', part_name_var.get())
+
+        if get_keys(main_stat_name_var.get()) != atf_data['main_stat_name']:
+            add_to_data(atf_data['main_stat_name_img_bw'], 'main_stat_img_set', 'main_stat_name',
+                        get_keys(main_stat_name_var.get()))
+
+        if star_var.get() != atf_data['star']:
+            pass
+        if level_var.get() != atf_data['level']:
+            pass
+        for i, each_sub in enumerate(atf_data['sub_stat_name']):
+            if get_keys(sub_stat_name_var[i].get()) != each_sub:
+                add_to_data(atf_data['sub_stat_name_img_bw'][i], 'sub_stat_img_set', 'sub_stat_name',
+                            get_keys(sub_stat_name_var[i].get()))
+        if asn_var.get() != atf_data['asn_name']:
+            add_to_data(atf_data['asn_img_bw'], 'artifact_set_img_set', 'artifact_set_name', asn_var.get())
 
     def add_to_data(image, img_set, list_of_name, name):
 
         def add_data_confirm():
             data.add_img_to_set(image, img_set, list_of_name, name)
+            add_data_window.quit()
             add_data_window.destroy()
+            return
 
         def add_data_cancel():
+            add_data_window.quit()
             add_data_window.destroy()
+            return
 
         add_data_window = AppTopLevel()
         add_data_window.title('add data confirm')
-        add_data_window.geometry('300x200+500+10')
+        add_data_window.geometry('300x200+510+10')
         add_data_window.configure(bg=bg_color)
 
         add_data_head_label = tk.Label(add_data_window)
@@ -124,7 +126,7 @@ def artifact_confirm(atf_data, alpha, is_save=False):
         add_data_confirm_btn[1].configure(command=add_data_cancel)
         set_color(add_data_confirm_btn[1])
 
-        im = Image.fromarray(image)
+        im = Image.fromarray(image).copy()
         imgtk = ImageTk.PhotoImage(image=im)
         stat_img = tk.Label(add_data_window)
         stat_img.place(relx=.5, y=row(1.5), anchor=tk.N)

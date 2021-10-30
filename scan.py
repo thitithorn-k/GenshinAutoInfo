@@ -40,13 +40,13 @@ test_image2 = (
 # stats-position variable description
 ####################################################################
 # all_stats_pos = all of stats position (x, y, w, h)
-# asn_pos[top_asn] = artifact-set's name position (x, y, w, h)
-# first_star_pos = artifact star position (x, y)
-# level_pos = artifact level position (x, y, w, h)
+# asn_pos[top_asn] = artifacts-set's name position (x, y, w, h)
+# first_star_pos = artifacts star position (x, y)
+# level_pos = artifacts level position (x, y, w, h)
 # sub_stat_pos = array of sub stat position [(x, y, w, h)]
 
-# stars_n = number of artifact's stars
-# sub_stats_n = number of artifact's sub stats
+# stars_n = number of artifacts's stars
+# sub_stats_n = number of artifacts's sub stats
 ####################################################################
 
 
@@ -104,7 +104,7 @@ def run(test=False):
         return -1
     # print('stars = ', stars_n)
 
-    # find lime color in image that refer to the artifact set's name ################################
+    # find lime color in image that refer to the artifacts set's name ################################
     green_lower = np.array([0, 210, 0], np.uint8)
     green_upper = np.array([200, 255, 200], np.uint8)
     green_mask = cv2.inRange(long_stats, green_lower, green_upper)
@@ -113,12 +113,12 @@ def run(test=False):
     # cv2.imshow('testing2', artifact_set)
 
     green_mask_cont, _, _ = find_contours(artifact_set, 0, (15, 2), (0, 255))
-    asn_pos = get_pos_from_contours(green_mask_cont)  # artifact set name's position
+    asn_pos = get_pos_from_contours(green_mask_cont)  # artifacts set name's position
 
     # cut needless part from 'long_stats'
     top_asn = len(asn_pos)-1
-    if top_asn < 0:  # exit if artifact-set's name is not found
-        print('artifact-set\'s name not found')
+    if top_asn < 0:  # exit if artifacts-set's name is not found
+        print('artifacts-set\'s name not found')
         return -2
     asn_y = asn_pos[top_asn][1] + asn_pos[top_asn][3]
     status_crop = long_stats[0:asn_y, 0:230]
@@ -224,7 +224,7 @@ def run(test=False):
     return res
 
 
-# read name of part of artifact
+# read name of part of artifacts
 # return part name, bw_img of part
 def read_part(part_img):
     part_img_cont, _, _ = find_contours(part_img, 0, (10, 8))
@@ -240,7 +240,7 @@ def read_part(part_img):
     return part_name[0], part_img_bw[0]
 
 
-# read level of artifact
+# read level of artifacts
 # return int
 def read_level(level_img):
     # cv2.imshow('test', level_img)

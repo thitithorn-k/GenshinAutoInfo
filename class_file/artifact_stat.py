@@ -13,7 +13,7 @@ class ArtifactStat:
         self.ANEMO_DMG = []
         self.GEO_DMG = []
         self.ELECTRO_DMG = []
-        self.HYDRPO_DMG = []
+        self.HYDRO_DMG = []
         self.PYRO_DMG = []
         self.CRYO_DMG = []
         self.HEAL = []

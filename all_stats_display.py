@@ -12,28 +12,34 @@ from class_file.weapon import Weapon
 from class_file.filnal_stats import FinalStats
 from class_file.app import AppTopLevel
 from class_file.tooltip import create_tool_tip
+
+from function.set_widget_color import set_color, bg_color, fg_color
+from function.stat_update import update_stat
 import stats_confirm
 
 app = None
 toggle = True
 
 # for setting stats
-atk_flat_bonus = 0
-atk_percent_bonus = 0
-def_flat_bonus = 0
-def_percent_bonus = 0
-hp_flat_bonus = 0
-hp_percent_bonus = 0
-cr_bonus = 0
-cd_bonus = 0
-em_bonus = 0
+stats = Stats()
+option_stats = Stats()
+stats_sum = Stats()
+# atk_flat_bonus = 0
+# atk_percent_bonus = 0
+# def_flat_bonus = 0
+# def_percent_bonus = 0
+# hp_flat_bonus = 0
+# hp_percent_bonus = 0
+# cr_bonus = 0
+# cd_bonus = 0
+# em_bonus = 0
 mon_res = 10
 mon_lv = 76
-mon_res_debuff = 0
-mon_def_debuff = 0
-reaction_dmg_bonus = 0
-max_hp_dmg_bonus = 0
-all_dmg_bonus = 0
+# mon_res_debuff = 0
+# mon_def_debuff = 0
+# reaction_dmg_bonus = 0
+# max_hp_dmg_bonus = 0
+# all_dmg_bonus = 0
 
 
 # for clear and change GUI
@@ -48,7 +54,7 @@ alpha = 95
 atf_btn = [None]*5
 
 # for save selected data
-artifact = [None]*5
+artifacts = [None] * 5
 selected_character = None
 selected_weapon = None
 artifact_stat = ArtifactStat()
@@ -121,6 +127,7 @@ character_name = [
 def write_save(obj):
     with open('data/save.pkl', 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+    print('saved')
 
 
 def read_save():
@@ -132,47 +139,51 @@ def read_save():
 
 
 def refresh_atf_btn():
-    global artifact
+    global artifacts
     for i in range(5):
-        if artifact[i] is not None:
+        if artifacts[i] is not None:
             atf_btn[i].configure(state='normal')
         else:
             atf_btn[i].configure(state='disabled')
 
 
 def change_atf(atf_data):
-    global artifact
+    global artifacts
     part_name = atf_data['part_name']
     atf_data['owner'] = selected_character.name
     if part_name == 'flower':
-        artifact[0] = atf_data
+        artifacts[0] = atf_data
     elif part_name == 'plume':
-        artifact[1] = atf_data
+        artifacts[1] = atf_data
     elif part_name == 'sands':
-        artifact[2] = atf_data
+        artifacts[2] = atf_data
     elif part_name == 'goblet':
-        artifact[3] = atf_data
+        artifacts[3] = atf_data
     elif part_name == 'circlet':
-        artifact[4] = atf_data
+        artifacts[4] = atf_data
     else:
         print(f'change atf error. part name not match ({part_name})')
+    global save_data
+    save_data['characters'][selected_character.name]['artifacts'] = artifacts
+    write_save(save_data)
     load_all_atf()
     refresh_atf_btn()
 
 
 def remove_atf(part_name, owner):
-    global artifact
+    global artifacts
     if part_name == 'flower':
-        artifact[0] = None
+        artifacts[0] = None
     elif part_name == 'plume':
-        artifact[1] = None
+        artifacts[1] = None
     elif part_name == 'sands':
-        artifact[2] = None
+        artifacts[2] = None
     elif part_name == 'goblet':
-        artifact[3] = None
+        artifacts[3] = None
     elif part_name == 'circlet':
-        artifact[4] = None
-    save_data['characters'][owner]['artifact'] = artifact
+        artifacts[4] = None
+    global save_data
+    save_data['characters'][owner]['artifacts'] = artifacts
     write_save(save_data)
     load_all_atf()
     refresh_atf_btn()
@@ -181,7 +192,7 @@ def remove_atf(part_name, owner):
 def load_all_atf():
     global artifact_stat
     artifact_stat = ArtifactStat()
-    for each_atf in artifact:
+    for each_atf in artifacts:
         if each_atf is None:
             continue
         main_stat_name = each_atf['main_stat_name']
@@ -214,7 +225,7 @@ def load_all_atf():
         elif main_stat_name == 'electro':
             artifact_stat.ELECTRO_DMG.append(main_stat_value[0]/100)
         elif main_stat_name == 'hydro':
-            artifact_stat.HYDRPO_DMG.append(main_stat_value[0]/100)
+            artifact_stat.HYDRO_DMG.append(main_stat_value[0]/100)
         elif main_stat_name == 'pyro':
             artifact_stat.PYRO_DMG.append(main_stat_value[0]/100)
         elif main_stat_name == 'cryo':
@@ -254,8 +265,8 @@ def load_all_atf():
             elif each_sub_name == 'energy':
                 artifact_stat.ER.append(each_sub_value[0]/100)
     draw_talent()
-    artifact_stat.print_log()
-    # TODO add artifact effect
+    # artifact_stat.print_log()
+    # TODO add artifacts effect
 
 
 def load_weapons_data():
@@ -273,23 +284,23 @@ def load_weapons_data():
 def get_character_info(char_name, level):
     characters = data_file['Characters']
     char_row = 2 + (character_name.index(char_name)*16) + char_level_offset.index(level)
-    stats = []
+    char_stats = []
     stat_offset = [
-        'C', 'D', 'E', 'F', 'G', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'W', 'X', 'Y', 'H'
+        'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'W', 'X', 'Y'
     ]
     for each_stat in stat_offset:
         if each_stat in ['P', 'Q', 'R', 'S', 'T', 'U']:
             value = characters[f'{each_stat}{2 + char_level_offset.index(level)}'].value
         elif each_stat == 'X' or each_stat == 'Y':
-            value = characters[f'X{2 + (character_name.index(char_name)*16)}'].value
+            value = characters[f'{each_stat}{2 + (character_name.index(char_name)*16)}'].value
         else:
             value = characters[f'{each_stat}{char_row}'].value
         if value is None:
             value = 0
-        stats.append(value)
-    return Character(char_name, stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6],
-                     stats[7], stats[8], stats[9], stats[10], stats[11], stats[12], stats[13],
-                     stats[14], stats[15], stats[16], stats[17], stats[18], stats[19], stats[20], stats[21])
+        char_stats.append(value)
+    return Character(char_name, char_stats[0], char_stats[1], char_stats[2], char_stats[3], char_stats[4], char_stats[5], char_stats[6],
+                     char_stats[7], char_stats[8], char_stats[9], char_stats[10], char_stats[11], char_stats[12], char_stats[13],
+                     char_stats[14], char_stats[15], char_stats[16], char_stats[17], char_stats[18], char_stats[19], char_stats[20], char_stats[21])
 
 
 def get_weapon_info(weapon_name, weapon_level):
@@ -306,7 +317,7 @@ def get_weapon_info(weapon_name, weapon_level):
         if each_column not in ['E', 'K']:
             value = value/100
         weapon_d.append(value)
-    return Weapon(weapon_d[0], weapon_d[1], weapon_d[2], weapon_d[3], weapon_d[4], weapon_d[5], weapon_d[6], weapon_d[7],
+    return Weapon(weapon_name, weapon_d[0], weapon_d[1], weapon_d[2], weapon_d[3], weapon_d[4], weapon_d[5], weapon_d[6], weapon_d[7],
                   weapon_d[8])
 
 
@@ -317,61 +328,67 @@ def calculate_stats():
         print('calcurate_stats_return')
         return
 
-    all_cr = selected_character.CR + selected_weapon.CR + sum(artifact_stat.CR) + cr_bonus
+    global stats, option_stats, stats_sum
+    stats_sum = stats + option_stats
+
+    all_cr = selected_character.CR + selected_weapon.CR + sum(artifact_stat.CR) + stats_sum.CR
     if all_cr > 1:
         all_cr = 1
-    all_cd = selected_character.CD + selected_weapon.CD + sum(artifact_stat.CD) + cd_bonus
-    # atk_normal_final = (sum_of_Flat_ATK+Char_ATK+Flat_ATK_bonus) + ( ( (sum_of_%_ATK+Char_%_ATK)+ATK_%_bonus) * (Char_ATK+Weapon_ATK) )
-    final_stats.atk_normal = (selected_character.ATK + selected_weapon.ATK + sum(artifact_stat.ATK) + atk_flat_bonus) + \
-                       (((selected_character.ATK_p + selected_weapon.ATK_p + sum(artifact_stat.ATK_p)) + atk_percent_bonus) * (selected_character.ATK + selected_weapon.ATK))
-    # atk_average_final = ATK_normal_final *  (1+(IF((sum_of_CR+ char_cr + cr_bonus)>1 , 1 , (SUM($E$6:$L$6)+$L$65+O11)  )*(sum_of_CD+ char_CD + cd_bonus)))
+    all_cd = selected_character.CD + selected_weapon.CD + sum(artifact_stat.CD) + stats_sum.CD
 
-    final_stats.atk_average = final_stats.atk_normal * (1+(all_cr * all_cd))
-    final_stats.atk_critical = final_stats.atk_normal * (1+all_cd)
-
-    final_stats.def_normal = (selected_character.DEF + sum(artifact_stat.DEF) + def_flat_bonus) + \
+    final_stats.def_normal = (selected_character.DEF + sum(artifact_stat.DEF) + stats_sum.DEF) + \
                        (((selected_character.DEF_p + selected_weapon.DEF_p + sum(
-                           artifact_stat.DEF_p)) + def_percent_bonus) * selected_character.DEF)
+                           artifact_stat.DEF_p)) + stats_sum.DEF_p) * selected_character.DEF)
     final_stats.def_average = final_stats.def_normal * (1+(all_cr * all_cd))
     final_stats.def_critical = final_stats.def_normal * (1+all_cd)
 
-    final_stats.hp_normal = (selected_character.HP + sum(artifact_stat.HP) + hp_flat_bonus) + \
-                       (((selected_character.HP_p + selected_weapon.HP_p + sum(
-                           artifact_stat.HP_p)) + hp_percent_bonus) * selected_character.HP)
+    final_stats.hp_normal = (selected_character.HP + sum(artifact_stat.HP) + stats_sum.HP) + \
+                       (((selected_character.HP_p + selected_weapon.HP_p + sum(artifact_stat.HP_p)) +
+                         stats_sum.HP_p) * selected_character.HP)
     final_stats.hp_average = final_stats.hp_normal * (1 + (all_cr * all_cd))
     final_stats.hp_critical = final_stats.hp_normal * (1 + all_cd)
 
-    final_stats.em = selected_character.EM + selected_weapon.EM + sum(artifact_stat.EM) + em_bonus
+    # atk_normal_final = (sum_of_Flat_ATK+Char_ATK+Flat_ATK_bonus) + ( ( (sum_of_%_ATK+Char_%_ATK)+ATK_%_bonus) * (Char_ATK+Weapon_ATK) )
+    final_stats.atk_normal = (selected_character.ATK + selected_weapon.ATK + sum(artifact_stat.ATK) + stats_sum.ATK) + \
+                             (((selected_character.ATK_p + selected_weapon.ATK_p + sum(
+                                 artifact_stat.ATK_p)) + stats_sum.ATK_p) * (
+                                          selected_character.ATK + selected_weapon.ATK)) + (stats_sum.max_hp_atk_bonus * final_stats.hp_normal)
+    # atk_average_final = ATK_normal_final *  (1+(IF((sum_of_CR+ char_cr + cr_bonus)>1 , 1 , (SUM($E$6:$L$6)+$L$65+O11)  )*(sum_of_CD+ char_CD + cd_bonus)))
+
+    final_stats.atk_average = final_stats.atk_normal * (1 + (all_cr * all_cd))
+    final_stats.atk_critical = final_stats.atk_normal * (1 + all_cd)
+
+    final_stats.em = selected_character.EM + selected_weapon.EM + sum(artifact_stat.EM) + stats_sum.EM
 
     final_stats.er = 1 + selected_character.ER + selected_weapon.ER + sum(artifact_stat.ER)
 
-    if mon_res_debuff < 0:
-        final_stats.monster_res = mon_res + mon_res_debuff*100 - \
-                            ((mon_res + mon_res_debuff * 100)/2 if (mon_res + mon_res_debuff * 100) < 0 else 0)
+    if stats_sum.mon_res_debuff < 0:
+        final_stats.monster_res = mon_res + stats_sum.mon_res_debuff*100 - \
+                            ((mon_res + stats_sum.mon_res_debuff * 100)/2 if (mon_res + stats_sum.mon_res_debuff * 100) < 0 else 0)
     else:
-        A = (mon_res_debuff * 100 if mon_res_debuff > 0 else 0)
+        A = (stats_sum.mon_res_debuff * 100 if stats_sum.mon_res_debuff > 0 else 0)
         B = ((mon_res - A) / 2 if (mon_res - A) < 0 else 0)
         final_stats.monster_res = mon_res - A - B
 
     final_stats.overloaded = selected_character.BOVERLOAD * \
                  (1-mon_res/100) * \
-                 (1 + ((1600 * final_stats.em / (2000 + final_stats.em)) / 100) + reaction_dmg_bonus)
+                 (1 + ((1600 * final_stats.em / (2000 + final_stats.em)) / 100) + stats_sum.reaction_dmg_bonus)
 
     final_stats.electrocharged = selected_character.BELECTROCH * \
                  (1-mon_res/100) * \
-                 (1 + ((1600 * final_stats.em / (2000 + final_stats.em)) / 100) + reaction_dmg_bonus)
+                 (1 + ((1600 * final_stats.em / (2000 + final_stats.em)) / 100) + stats_sum.reaction_dmg_bonus)
 
     final_stats.swirl = selected_character.BSWIRL * \
                  (1-mon_res/100) * \
-                 (1 + ((1600 * final_stats.em / (2000 + final_stats.em)) / 100) + reaction_dmg_bonus)
+                 (1 + ((1600 * final_stats.em / (2000 + final_stats.em)) / 100) + stats_sum.reaction_dmg_bonus)
 
     final_stats.shatter = selected_character.BSHATTER * \
                  (1-mon_res/100) * \
-                 (1 + ((1600 * final_stats.em / (2000 + final_stats.em)) / 100) + reaction_dmg_bonus)
+                 (1 + ((1600 * final_stats.em / (2000 + final_stats.em)) / 100) + stats_sum.reaction_dmg_bonus)
 
     final_stats.superconduct = selected_character.BSCONDUCT * \
                  (1-mon_res/100) * \
-                 (1 + ((1600 * final_stats.em / (2000 + final_stats.em)) / 100) + reaction_dmg_bonus)
+                 (1 + ((1600 * final_stats.em / (2000 + final_stats.em)) / 100) + stats_sum.reaction_dmg_bonus)
 
     print(f'ATK normal final: {final_stats.atk_normal}\n'
           f'ATK average final: {final_stats.atk_average}\n'
@@ -400,7 +417,7 @@ def load_talent():
     line = 1
     global talent
     talent = []
-    talent_level_column = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R']
+    talent_level_column = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S']
     while True:
         A = atk_talent[f'A{line}'].value
         if A is not None:
@@ -420,7 +437,7 @@ def load_talent():
             break
 
 
-def calculate_talent_dmg(talent_value, talent_type):
+def calculate_talent_dmg(talent_value, talent_type, normal_atk_type, talent_index):
     talent_value_add = 0
     talent_value_multi = 1
     dmg_base = final_stats.atk_normal
@@ -455,22 +472,44 @@ def calculate_talent_dmg(talent_value, talent_type):
         pe_dmg_bonus = 0
         if talent_type == 'p':
             pe_dmg_bonus = selected_character.PDMG + sum(artifact_stat.PDMG)
-        elif talent_type == 'e':
+        elif talent_type == 'e' or talent_index in [1, 2]:
             pe_dmg_bonus = selected_character.EDMG
+            pe_dmg_bonus += stats_sum.EDMG
+            # check character elemental and and element dmg that match with them
             if selected_character.ELEMENTAL == 'Anemo':
                 pe_dmg_bonus += sum(artifact_stat.ANEMO_DMG)
+                pe_dmg_bonus += stats_sum.ANEMO_DMG
             elif selected_character.ELEMENTAL == 'Geo':
                 pe_dmg_bonus += sum(artifact_stat.GEO_DMG)
+                pe_dmg_bonus += stats_sum.GEO_DMG
             elif selected_character.ELEMENTAL == 'Electro':
                 pe_dmg_bonus += sum(artifact_stat.ELECTRO_DMG)
+                pe_dmg_bonus += stats_sum.ELECTRO_DMG
             elif selected_character.ELEMENTAL == 'Hydro':
-                pe_dmg_bonus += sum(artifact_stat.HYDRPO_DMG_DMG)
+                pe_dmg_bonus += sum(artifact_stat.HYDRO_DMG)
+                pe_dmg_bonus += stats_sum.HYDRO_DMG
             elif selected_character.ELEMENTAL == 'Pyro':
-                pe_dmg_bonus += sum(artifact_stat.PYRO_DMG_DMG)
+                pe_dmg_bonus += sum(artifact_stat.PYRO_DMG)
+                pe_dmg_bonus += stats_sum.PYRO_DMG
             elif selected_character.ELEMENTAL == 'Cryo':
-                pe_dmg_bonus += sum(artifact_stat.CRYO_DMG_DMG)
-        a = ((100 + selected_character.level) / ((100 + selected_character.level) + ((100 + mon_lv) * (1 + mon_def_debuff))))
-        b = ((max_hp_dmg_bonus * final_stats.hp_normal) * (1 - final_stats.monster_res / 100) * (
+                pe_dmg_bonus += sum(artifact_stat.CRYO_DMG)
+                pe_dmg_bonus += stats_sum.CRYO_DMG
+
+        all_dmg_bonus = stats_sum.all_dmg_bonus
+        if talent_index == 0:
+            if normal_atk_type == 'n':
+                all_dmg_bonus += stats_sum.normal_attack_dmg_bonus
+            if normal_atk_type == 'c':
+                all_dmg_bonus += stats_sum.charge_attack_dmg_bonus
+            if normal_atk_type == 'p':
+                all_dmg_bonus += stats_sum.plunging_attack_dmg_bonus
+        elif talent_index == 1:
+            all_dmg_bonus += stats_sum.element_skill_dmg_bonus
+        elif talent_index == 2:
+            all_dmg_bonus += stats_sum.element_burst_dmg_bonus
+
+        a = ((100 + selected_character.level) / ((100 + selected_character.level) + ((100 + mon_lv) * (1 + stats_sum.mon_def_debuff))))
+        b = ((stats_sum.max_hp_dmg_bonus * final_stats.hp_normal) * (1 - final_stats.monster_res / 100) * (
                     (100 + selected_character.level) / ((100 + selected_character.level) + (100 + mon_lv))))
         temp_value = []
         temp_crit_value = []
@@ -481,22 +520,29 @@ def calculate_talent_dmg(talent_value, talent_type):
                         1 + all_dmg_bonus + pe_dmg_bonus))
             temp_average_value.append((dmg_base_average * (1 - final_stats.monster_res / 100) * a * (each_value / 100) + b) * 1 * (
                         1 + all_dmg_bonus + pe_dmg_bonus))
+
         talent_value_final = [None]*3
         for i, each_temp in enumerate(temp_value):
             talent_value_final[0] = ''
             talent_value_final[0] += str(round(each_temp) + (int(talent_value_add) if talent_value_add else 0))
             if i+1 < len(temp_value):
                 talent_value_final[0] += ' + '
+            if talent_value_multi > 1:
+                talent_value_final[0] += f'*{talent_value_multi}'
         for i, each_temp in enumerate(temp_crit_value):
             talent_value_final[1] = ''
             talent_value_final[1] += str(round(each_temp) + (int(talent_value_add) if talent_value_add else 0))
             if i+1 < len(temp_value):
                 talent_value_final[1] += ' + '
+            if talent_value_multi > 1:
+                talent_value_final[1] += f'*{talent_value_multi}'
         for i, each_temp in enumerate(temp_average_value):
             talent_value_final[2] = ''
             talent_value_final[2] += str(round(each_temp) + (int(talent_value_add) if talent_value_add else 0))
             if i+1 < len(temp_value):
                 talent_value_final[2] += ' + '
+            if talent_value_multi > 1:
+                talent_value_final[2] += f'*{talent_value_multi}'
     elif talent_type in ['n_bonus']:
         # TODO make n_bonus works
         talent_value_final = 'under_dev'
@@ -507,17 +553,6 @@ def calculate_talent_dmg(talent_value, talent_type):
         talent_value_final[2] = str(talent_value)
 
     return talent_value_final
-
-
-def set_color(obj):
-    bg_color = '#111111'
-    fg_color = '#eeeeee'
-    obj['bg'] = bg_color
-    obj['fg'] = fg_color
-    obj['highlightthickness'] = 0
-    if hasattr(obj, 'activebackground'):
-        obj['activebackground'] = bg_color
-        obj['activeforeground'] = fg_color
 
 
 def row(r):
@@ -541,7 +576,7 @@ def toggle_show():
         toggle = True
 
 
-def draw_talent():
+def draw_talent(stats_update=True):
     global talent_name_label, sub_talent_label, talent_level_var, talent_level_combobox
 
     try:
@@ -553,8 +588,12 @@ def draw_talent():
         save_data['characters'][selected_character.name]['talents_level'][i] = talent_level_var[i].get()
         write_save(save_data)
         draw_talent()
+    if selected_character and selected_weapon:
+        if stats_update:
+            global stats
+            stats = update_stat(selected_character, selected_weapon, artifacts, stats)
+        calculate_stats()
 
-    calculate_stats()
     for each_main in talent_name_label:
         each_main.destroy()
     for each_sub in sub_talent_label:
@@ -573,7 +612,7 @@ def draw_talent():
         # draw talent name
         talent_name_label.append(tk.Label(app))
         last_talent_name_label = len(talent_name_label)-1
-        talent_name_label[last_talent_name_label].place(x=20, y=row(current_row), height=24)
+        talent_name_label[last_talent_name_label].place(x=10, y=row(current_row), height=24)
         talent_name_label[last_talent_name_label].configure(text=each_talent[0])
         set_color(talent_name_label[last_talent_name_label])
 
@@ -596,17 +635,17 @@ def draw_talent():
             current_row += 1
             sub_talent_label.append(tk.Label(app))
             last_sub_talent_label = len(sub_talent_label)-1
-            sub_talent_label[last_sub_talent_label].place(x=40, y=row(current_row), height=24)
+            sub_talent_label[last_sub_talent_label].place(x=20, y=row(current_row), height=24)
             sub_talent_label[last_sub_talent_label].configure(text=f'- {each_sub[0]}')
             set_color(sub_talent_label[last_sub_talent_label])
 
             # calculate talent's sub damage
-            talent_value = calculate_talent_dmg(each_sub[1][level], each_sub[1][15])
+            talent_value = calculate_talent_dmg(each_sub[1][level], each_sub[1][15], each_sub[1][16], i)
 
             # draw talent's sub damage
             sub_talent_damage_label.append(tk.Label(app))
             last_sub_talent_damage_label = len(sub_talent_damage_label)-1
-            sub_talent_damage_label[last_sub_talent_damage_label].place(x=238, y=row(current_row), width=100, height=24)
+            sub_talent_damage_label[last_sub_talent_damage_label].place(x=188, y=row(current_row), width=150, height=24)
             sub_talent_damage_label[last_sub_talent_damage_label].configure(text=' | '.join(talent_value), anchor='e', justify=tk.RIGHT)
             set_color(sub_talent_damage_label[last_sub_talent_damage_label])
             create_tool_tip(sub_talent_damage_label[last_sub_talent_damage_label], text=f'normal dmg: {talent_value[0]} | critical dmg: {talent_value[1]} | average dmg: {talent_value[2]}')
@@ -623,9 +662,6 @@ def draw_talent():
 def draw_window():
     global save_data, weapons_data
 
-    bg_color = '#111111'
-    fg_color = '#eeeeee'
-
     global app
     app = AppTopLevel()
 
@@ -641,7 +677,7 @@ def draw_window():
         save_data['characters'][selected_character_name] = {'level': char_level_var.get(),
                                                             'weapon': weapon_name_var.get(),
                                                             'weapon_level': weapon_level_var.get(),
-                                                            'artifacts': artifact,
+                                                            'artifacts': artifacts.copy(),
                                                             'talents_level': []}
         if 'mon_res' not in save_data:
             save_data['mon_res'] = mon_res
@@ -670,13 +706,13 @@ def draw_window():
             weapon_name_var.set(_weapons_name[0])
         weapon_name_combobox.config(value=_weapons_name)
 
-        # load character's artifact save
-        global artifact
+        # load character's artifacts save
+        global artifacts
         if char_name_var.get() in save_data['characters']:
-            artifact = save_data['characters'][char_name_var.get()]['artifacts']
+            artifacts = save_data['characters'][char_name_var.get()]['artifacts'].copy()
             refresh_atf_btn()
         else:
-            artifact = [None]*5
+            artifacts = [None] * 5
             refresh_atf_btn()
         load_all_atf()
 
@@ -781,7 +817,7 @@ def draw_window():
     weapon_level_combobox.place(x=260, y=row(1), width=78, height=24)
 
     def display_artifact(i):
-        stats_confirm.artifact_confirm(artifact[i], alpha, True)
+        stats_confirm.artifact_confirm(artifacts[i], alpha, True)
 
     artifact_label = tk.Label(app)
     artifact_label.place(x=10, y=row(2), height=24)
@@ -898,9 +934,7 @@ def draw_window():
     talent_label.configure(text='Talent Damage', font=('TkDefaultFont', 12))
     set_color(talent_label)
 
-    app.attributes('-topmost', True)
     app.attributes('-alpha', 0.95)
-    app.mainloop()
 
 
 def main():
