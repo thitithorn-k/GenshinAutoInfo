@@ -7,13 +7,14 @@ from class_file.app import AppTopLevel
 from class_file.stats_option import StatsOption
 from class_file.stats import Stats
 
-from function.set_widget_color import set_color
+from function.set_widget_color import set_color, top_header_color, bg_color
 
 condition_app = None
 alpha = 95
 canvas = None
 stats_option = []
 default_stats = None
+row_offset = 0
 
 each_option_option_combobox_var = None
 
@@ -27,8 +28,7 @@ def reset_all_option():
     global condition_app, stats_option
     stats_option.clear()
     if condition_app is not None:
-        condition_app.destroy()
-        condition_app = None
+        condition_app.withdraw()
     all_stats_display.option_stats = Stats()
 
 
@@ -57,19 +57,25 @@ def toggle_option(option):
 
 
 def draw_stats_option_window():
-    global condition_app, stats_option, canvas
+    global condition_app, stats_option, canvas, row_offset
     if condition_app is None:
-        condition_app = AppTopLevel()
+        from main import app
+        condition_app = AppTopLevel(app)
         condition_app.geometry('300x500+500+10')
         condition_app.attributes('-alpha', 0.95)
+    else:
+        condition_app.deiconify()
 
     # if nothing in stats_option destroy window and return
     if len(stats_option) <= 0:
-        condition_app.destroy()
+        condition_app.withdraw()
+        # condition_app.destroy()
         return
 
+    row_offset = 0
+
     head_canvas = tk.Canvas(condition_app)
-    head_canvas.configure(width=300, height=25, bd=0, bg='#111199', highlightthickness=0)
+    head_canvas.configure(width=300, height=25, bd=0, bg=top_header_color, highlightthickness=0)
     head_canvas.place(x=0, y=0)
 
     canvas = tk.Canvas(condition_app)
@@ -94,9 +100,9 @@ def draw_stats_option_window():
 
         each_option_option_checkbox = tk.Checkbutton(canvas)
         each_option_option_checkbox.configure(text=each_option.condition, variable=each_option.status,
-                                              wraplength=270, justify=tk.LEFT,
-                                              selectcolor='#111111', command=lambda op=each_option: toggle_option(op))
-        each_option_option_checkbox.place(x=10, y=row(current_row)-10, width=280)
+                                              wraplength=250, justify=tk.LEFT,
+                                              selectcolor=bg_color, command=lambda op=each_option: toggle_option(op))
+        each_option_option_checkbox.place(x=20, y=row(current_row)-10)
         set_color(each_option_option_checkbox)
 
         if type(each_option.stats) == list:
@@ -110,6 +116,8 @@ def draw_stats_option_window():
             each_option_stack_combobox.place(x=240, y=row(current_row), width=50)
             set_color(each_option_option_checkbox)
 
+        if len(each_option.condition) > 40:
+            row_offset += 1
         current_row += 1
 
         condition_app.update()
@@ -125,4 +133,4 @@ def set_alpha(value):
 
 
 def row(i):
-    return 10 + (i * 30)
+    return 10 + (i * 30) + (row_offset*6)

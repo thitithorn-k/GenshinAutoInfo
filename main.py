@@ -82,6 +82,7 @@ def main():
     app.configure(bg=bg_color)
     app.option_add("*TCombobox*Listbox*Background", bg_color)
     app.option_add("*TCombobox*Listbox*Foreground", fg_color)
+    print('this app= ', app)
 
     s = ttk.Style()
     s.theme_use('winnative')
@@ -128,8 +129,9 @@ def main():
     alpha_set_scale.configure(command=set_alpha)
 
     app.attributes('-alpha', 0.95)
-
-    all_stats_display.main()
+    app.update()
+    all_stats_display.main(app)
+    condition_option.draw_stats_option_window()
     app.mainloop()
 
 

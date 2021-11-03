@@ -13,10 +13,9 @@ from class_file.filnal_stats import FinalStats
 from class_file.app import AppTopLevel
 from class_file.tooltip import create_tool_tip
 
-from function.set_widget_color import set_color, bg_color, fg_color
+from function.set_widget_color import set_color, bg_color, fg_color, top_header_color
 from function.stat_update import update_stat
 import stats_confirm
-from main import app
 
 all_stats_display_app = None
 toggle = True
@@ -655,14 +654,15 @@ def draw_talent(stats_update=True):
 
 
 # draw stats window
-def draw_window():
+def draw_window(app):
     global save_data, weapons_data
 
     global all_stats_display_app
+    print(app)
     all_stats_display_app = AppTopLevel(app)
 
     head_canvas = tk.Canvas(all_stats_display_app)
-    head_canvas.configure(width=350, height=25, bd=0, bg='#111199', highlightthickness=0)
+    head_canvas.configure(width=350, height=25, bd=0, bg=top_header_color, highlightthickness=0)
     head_canvas.place(x=0, y=0)
     all_stats_display_app.update()
 
@@ -936,12 +936,17 @@ def draw_window():
     set_color(talent_label)
 
     all_stats_display_app.attributes('-alpha', 0.95)
+    all_stats_display_app.focus()
+
+    def on_closing():
+        app.destroy()
+
+    all_stats_display_app.protocol("WM_DELETE_WINDOW", on_closing)
 
 
-def main():
+def main(app):
     global weapons_data, save_data
     weapons_data = load_weapons_data()
     save_data = read_save()
     load_all_atf()
-    draw_window()
-    return
+    draw_window(app)

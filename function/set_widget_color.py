@@ -1,5 +1,6 @@
 bg_color = '#111133'
 fg_color = '#eeeeee'
+top_header_color = '#111155'
 
 
 def set_color(obj, fg=True):

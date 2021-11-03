@@ -25,6 +25,7 @@ class ToolTip(object):
                       background="#ffffe0", relief=SOLID, borderwidth=1,
                       font=("tahoma", "8", "normal"))
         label.pack(ipadx=1)
+        pass
 
     def hidetip(self):
         tw = self.tipwindow
