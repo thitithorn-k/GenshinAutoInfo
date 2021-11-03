@@ -9,7 +9,7 @@ from class_file.stats import Stats
 
 from function.set_widget_color import set_color
 
-app = None
+condition_app = None
 alpha = 95
 canvas = None
 stats_option = []
@@ -24,11 +24,11 @@ def add_option(name, condition, stats):
 
 
 def reset_all_option():
-    global app, stats_option
+    global condition_app, stats_option
     stats_option.clear()
-    if app is not None:
-        app.destroy()
-        app = None
+    if condition_app is not None:
+        condition_app.destroy()
+        condition_app = None
     all_stats_display.option_stats = Stats()
 
 
@@ -57,19 +57,23 @@ def toggle_option(option):
 
 
 def draw_stats_option_window():
-    global app, stats_option, canvas
-    if app is None:
-        app = AppTopLevel()
-        app.geometry('300x500+500+10')
-        app.attributes('-alpha', 0.95)
+    global condition_app, stats_option, canvas
+    if condition_app is None:
+        condition_app = AppTopLevel()
+        condition_app.geometry('300x500+500+10')
+        condition_app.attributes('-alpha', 0.95)
 
     # if nothing in stats_option destroy window and return
     if len(stats_option) <= 0:
-        app.destroy()
+        condition_app.destroy()
         return
 
-    canvas = tk.Canvas(app)
-    canvas.place(x=0, y=0)
+    head_canvas = tk.Canvas(condition_app)
+    head_canvas.configure(width=300, height=25, bd=0, bg='#111199', highlightthickness=0)
+    head_canvas.place(x=0, y=0)
+
+    canvas = tk.Canvas(condition_app)
+    canvas.place(x=0, y=25)
     set_color(canvas, False)
 
     option_label = tk.Label(canvas)
@@ -108,14 +112,14 @@ def draw_stats_option_window():
 
         current_row += 1
 
-        app.update()
-        # app.mainloop()
+        condition_app.update()
+        # condition_app.mainloop()
 
 
 def set_alpha(value):
-    if app is not None:
-        app.attributes('-alpha', float(value) / 100)
-        app.update()
+    if condition_app is not None:
+        condition_app.attributes('-alpha', float(value) / 100)
+        condition_app.update()
         global alpha
         alpha = value
 

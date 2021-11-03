@@ -127,7 +127,6 @@ def main():
     alpha_set_scale.set(95)
     alpha_set_scale.configure(command=set_alpha)
 
-    app.attributes('-topmost', True)
     app.attributes('-alpha', 0.95)
 
     all_stats_display.main()

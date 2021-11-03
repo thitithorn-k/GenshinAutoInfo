@@ -1,4 +1,4 @@
-bg_color = '#111111'
+bg_color = '#111133'
 fg_color = '#eeeeee'
 
 

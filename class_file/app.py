@@ -1,6 +1,6 @@
 import tkinter as tk
 
-bg_color = '#111111'
+bg_color = '#111133'
 
 class AppMain(tk.Tk):
     def __init__(self, master=None):
@@ -30,13 +30,20 @@ class AppTopLevel(tk.Toplevel):
         self._offsetx = 0
         self._offsety = 0
         self.bind('<Button-3>', self.clickwin)
-        self.bind('<B3-Motion>', self.dragwin)
+        self.bind('<B3-Motion>', self.dragwin_right)
         self.bind('<Button-1>', self.clickwin)
         self.bind('<B1-Motion>', self.dragwin)
         self.configure(bg=bg_color)
         self.attributes('-topmost', True)
 
     def dragwin(self, event):
+        if self._offsety > 25:
+            return
+        x = self.winfo_pointerx() - self._offsetx
+        y = self.winfo_pointery() - self._offsety
+        self.geometry('+{x}+{y}'.format(x=x, y=y))
+
+    def dragwin_right(self, event):
         x = self.winfo_pointerx() - self._offsetx
         y = self.winfo_pointery() - self._offsety
         self.geometry('+{x}+{y}'.format(x=x, y=y))

@@ -16,8 +16,9 @@ from class_file.tooltip import create_tool_tip
 from function.set_widget_color import set_color, bg_color, fg_color
 from function.stat_update import update_stat
 import stats_confirm
+from main import app
 
-app = None
+all_stats_display_app = None
 toggle = True
 
 # for setting stats
@@ -556,33 +557,28 @@ def calculate_talent_dmg(talent_value, talent_type, normal_atk_type, talent_inde
 
 
 def row(r):
-    return 10 + (r*30)
+    return 40 + (r*30)
 
 
 def set_alpha(value):
-    app.attributes('-alpha', float(value) / 100)
-    app.update()
+    all_stats_display_app.attributes('-alpha', float(value) / 100)
+    all_stats_display_app.update()
     global alpha
     alpha = value
 
 
 def toggle_show():
-    global app, toggle
+    global all_stats_display_app, toggle
     if toggle:
-        app.withdraw()
+        all_stats_display_app.withdraw()
         toggle = False
     else:
-        app.deiconify()
+        all_stats_display_app.deiconify()
         toggle = True
 
 
 def draw_talent(stats_update=True):
     global talent_name_label, sub_talent_label, talent_level_var, talent_level_combobox
-
-    try:
-        print(selected_character.level)
-    except:
-        pass
 
     def talent_change(event, i):
         save_data['characters'][selected_character.name]['talents_level'][i] = talent_level_var[i].get()
@@ -610,7 +606,7 @@ def draw_talent(stats_update=True):
     for i, each_talent in enumerate(talent):
         current_row += 1
         # draw talent name
-        talent_name_label.append(tk.Label(app))
+        talent_name_label.append(tk.Label(all_stats_display_app))
         last_talent_name_label = len(talent_name_label)-1
         talent_name_label[last_talent_name_label].place(x=10, y=row(current_row), height=24)
         talent_name_label[last_talent_name_label].configure(text=each_talent[0])
@@ -618,12 +614,12 @@ def draw_talent(stats_update=True):
 
         talent_level_choices = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
-        talent_level_var.append(tk.StringVar(app))
+        talent_level_var.append(tk.StringVar(all_stats_display_app))
         if selected_character.name in save_data['characters'] and len(save_data['characters'][selected_character.name]['talents_level']) > 0:
             talent_level_var[i].set(save_data['characters'][selected_character.name]['talents_level'][i])
         else:
             talent_level_var[i].set(talent_level_choices[9])
-        talent_level_combobox.append(ttk.Combobox(app, textvariable=talent_level_var[i], values=talent_level_choices))
+        talent_level_combobox.append(ttk.Combobox(all_stats_display_app, textvariable=talent_level_var[i], values=talent_level_choices))
         last_talent_level_combobox = len(talent_level_combobox) - 1
         talent_level_combobox[last_talent_level_combobox].bind('<<ComboboxSelected>>', lambda event, talent_i=i: talent_change(event, talent_i))
         talent_level_combobox[last_talent_level_combobox].place(x=276, y=row(current_row), width=60, height=24)
@@ -633,7 +629,7 @@ def draw_talent(stats_update=True):
         for each_sub in each_talent[1]:
             # draw talent's sub name
             current_row += 1
-            sub_talent_label.append(tk.Label(app))
+            sub_talent_label.append(tk.Label(all_stats_display_app))
             last_sub_talent_label = len(sub_talent_label)-1
             sub_talent_label[last_sub_talent_label].place(x=20, y=row(current_row), height=24)
             sub_talent_label[last_sub_talent_label].configure(text=f'- {each_sub[0]}')
@@ -643,7 +639,7 @@ def draw_talent(stats_update=True):
             talent_value = calculate_talent_dmg(each_sub[1][level], each_sub[1][15], each_sub[1][16], i)
 
             # draw talent's sub damage
-            sub_talent_damage_label.append(tk.Label(app))
+            sub_talent_damage_label.append(tk.Label(all_stats_display_app))
             last_sub_talent_damage_label = len(sub_talent_damage_label)-1
             sub_talent_damage_label[last_sub_talent_damage_label].place(x=188, y=row(current_row), width=150, height=24)
             sub_talent_damage_label[last_sub_talent_damage_label].configure(text=' | '.join(talent_value), anchor='e', justify=tk.RIGHT)
@@ -651,23 +647,28 @@ def draw_talent(stats_update=True):
             create_tool_tip(sub_talent_damage_label[last_sub_talent_damage_label], text=f'normal dmg: {talent_value[0]} | critical dmg: {talent_value[1]} | average dmg: {talent_value[2]}')
     global drew
     if not drew:
-        app.geometry(f'350x{row(current_row + 1) + 6}+140+10')
+        all_stats_display_app.geometry(f'350x{row(current_row + 1) + 6}+140+10')
         drew = True
     else:
-        # app.geometry(f'350x{row(current_row + 1) + 6}+{app.winfo_x()}+{app.winfo_y()}')
-        app.geometry(f'350x{row(current_row + 1) + 6}')
+        # all_stats_display_app.geometry(f'350x{row(current_row + 1) + 6}+{all_stats_display_app.winfo_x()}+{all_stats_display_app.winfo_y()}')
+        all_stats_display_app.geometry(f'350x{row(current_row + 1) + 6}')
 
 
 # draw stats window
 def draw_window():
     global save_data, weapons_data
 
-    global app
-    app = AppTopLevel()
+    global all_stats_display_app
+    all_stats_display_app = AppTopLevel(app)
 
-    app.configure(bg=bg_color)
-    app.option_add("*TCombobox*Listbox*Background", bg_color)
-    app.option_add("*TCombobox*Listbox*Foreground", fg_color)
+    head_canvas = tk.Canvas(all_stats_display_app)
+    head_canvas.configure(width=350, height=25, bd=0, bg='#111199', highlightthickness=0)
+    head_canvas.place(x=0, y=0)
+    all_stats_display_app.update()
+
+    all_stats_display_app.configure(bg=bg_color)
+    all_stats_display_app.option_add("*TCombobox*Listbox*Background", bg_color)
+    all_stats_display_app.option_add("*TCombobox*Listbox*Foreground", fg_color)
 
     # save selected data to file
     def save_selected_data():
@@ -734,28 +735,28 @@ def draw_window():
         save_selected_data()
         draw_talent()
 
-    character_label = tk.Label(app)
+    character_label = tk.Label(all_stats_display_app)
     character_label.place(x=10, y=row(0), height=24)
     character_label.configure(text='Character')
     set_color(character_label)
 
     char_name_choices = sorted(character_name)
-    char_name_var = tk.StringVar(app)
+    char_name_var = tk.StringVar(all_stats_display_app)
     if 'selected_character' in save_data:
         char_name_var.set(save_data['selected_character'])
     else:
         char_name_var.set(char_name_choices[0])
-    char_name_combobox = ttk.Combobox(app, textvariable=char_name_var, values=char_name_choices)
+    char_name_combobox = ttk.Combobox(all_stats_display_app, textvariable=char_name_var, values=char_name_choices)
     char_name_combobox.bind('<<ComboboxSelected>>', character_change)
     char_name_combobox.place(x=70, y=row(0), width=185, height=24)
 
     char_level_choices = char_level_offset
-    char_level_var = tk.StringVar(app)
+    char_level_var = tk.StringVar(all_stats_display_app)
     if 'selected_character' in save_data:
         char_level_var.set(save_data['characters'][char_name_var.get()]['level'])
     else:
         char_level_var.set(char_level_offset[len(char_level_offset) - 1])
-    char_level_combobox = ttk.Combobox(app, textvariable=char_level_var, values=char_level_choices)
+    char_level_combobox = ttk.Combobox(all_stats_display_app, textvariable=char_level_var, values=char_level_choices)
     char_level_combobox.bind('<<ComboboxSelected>>', character_level_change)
     char_level_combobox.place(x=260, y=row(0), width=78, height=24)
 
@@ -790,36 +791,36 @@ def draw_window():
         draw_talent()
         save_selected_data()
 
-    weapon_label = tk.Label(app)
+    weapon_label = tk.Label(all_stats_display_app)
     weapon_label.place(x=10, y=row(1), height=24)
     weapon_label.configure(text='Weapon')
     set_color(weapon_label)
 
     weapons_name = [weapons_data[i][0] for i, _ in enumerate(weapons_data)]
     weapon_name_choices = sorted(weapons_name)
-    weapon_name_var = tk.StringVar(app)
+    weapon_name_var = tk.StringVar(all_stats_display_app)
     if char_name_var.get() in save_data['characters']:
         weapon_name_var.set(save_data['characters'][char_name_var.get()]['weapon'])
     else:
         weapon_name_var.set(weapon_name_choices[0])
-    weapon_name_combobox = ttk.Combobox(app, textvariable=weapon_name_var, values=weapon_name_choices)
+    weapon_name_combobox = ttk.Combobox(all_stats_display_app, textvariable=weapon_name_var, values=weapon_name_choices)
     weapon_name_combobox.bind('<<ComboboxSelected>>', weapon_name_changed)
     weapon_name_combobox.place(x=70, y=row(1), width=185, height=24)
 
     weapon_level_choices = weapons_level_offset
-    weapon_level_var = tk.StringVar(app)
+    weapon_level_var = tk.StringVar(all_stats_display_app)
     if 'selected_weapon' in save_data:
         weapon_level_var.set(save_data['characters'][char_name_var.get()]['weapon_level'])
     else:
         weapon_level_var.set(weapons_level_offset[len(weapons_level_offset) - 1])
-    weapon_level_combobox = ttk.Combobox(app, textvariable=weapon_level_var, values=weapon_level_choices)
+    weapon_level_combobox = ttk.Combobox(all_stats_display_app, textvariable=weapon_level_var, values=weapon_level_choices)
     weapon_level_combobox.bind('<<ComboboxSelected>>', weapon_level_changed)
     weapon_level_combobox.place(x=260, y=row(1), width=78, height=24)
 
     def display_artifact(i):
         stats_confirm.artifact_confirm(artifacts[i], alpha, True)
 
-    artifact_label = tk.Label(app)
+    artifact_label = tk.Label(all_stats_display_app)
     artifact_label.place(x=10, y=row(2), height=24)
     artifact_label.configure(text='Artifact')
     set_color(artifact_label)
@@ -827,7 +828,7 @@ def draw_window():
     global atf_btn
     artifact_name = ['Flower', 'Plume', 'Sands', 'Goblet', 'Circlet']
     for i in range(5):
-        atf_btn[i] = tk.Button(app)
+        atf_btn[i] = tk.Button(all_stats_display_app)
         atf_btn[i].place(x=70 + (i*55), y=row(2), width=50, height=24)
         atf_btn[i].configure(text=artifact_name[i], state='disabled')
         atf_btn[i].configure(command=lambda atf_i=i: display_artifact(atf_i))
@@ -846,7 +847,7 @@ def draw_window():
             monster_res_confirm_btn.destroy()
 
             nonlocal monster_res_btn
-            monster_res_btn = tk.Button(app)
+            monster_res_btn = tk.Button(all_stats_display_app)
             monster_res_btn.place(x=90, y=row(3), width=70, height=24)
             monster_res_btn.configure(text=int(mon_res), command=monster_res_change)
             set_color(monster_res_btn)
@@ -855,13 +856,13 @@ def draw_window():
 
         monster_res_btn.destroy()
 
-        monster_res_text = tk.Text(app)
+        monster_res_text = tk.Text(all_stats_display_app)
         monster_res_text.place(x=90, y=row(3), width=35, height=24)
         monster_res_text.insert(1.0, int(mon_res))
         monster_res_text.configure(pady=5)
         set_color(monster_res_text)
 
-        monster_res_confirm_btn = tk.Button(app)
+        monster_res_confirm_btn = tk.Button(all_stats_display_app)
         monster_res_confirm_btn.place(x=130, y=row(3), width=30, height=24)
         monster_res_confirm_btn.configure(text='Set', command=set_monster_res)
         set_color(monster_res_confirm_btn)
@@ -879,7 +880,7 @@ def draw_window():
             monster_lv_confirm_btn.destroy()
 
             nonlocal monster_lv_btn
-            monster_lv_btn = tk.Button(app)
+            monster_lv_btn = tk.Button(all_stats_display_app)
             monster_lv_btn.place(x=268, y=row(3), width=70, height=24)
             monster_lv_btn.configure(text=int(mon_lv), command=monster_lv_change)
             set_color(monster_lv_btn)
@@ -888,13 +889,13 @@ def draw_window():
 
         monster_lv_btn.destroy()
 
-        monster_lv_text = tk.Text(app)
+        monster_lv_text = tk.Text(all_stats_display_app)
         monster_lv_text.place(x=268, y=row(3), width=35, height=24)
         monster_lv_text.insert(1.0, int(mon_lv))
         monster_lv_text.configure(pady=5)
         set_color(monster_lv_text)
 
-        monster_lv_confirm_btn = tk.Button(app)
+        monster_lv_confirm_btn = tk.Button(all_stats_display_app)
         monster_lv_confirm_btn.place(x=303, y=row(3), width=30, height=24)
         monster_lv_confirm_btn.configure(text='Set', command=set_monster_lv)
         set_color(monster_lv_confirm_btn)
@@ -904,37 +905,37 @@ def draw_window():
         mon_res = save_data['mon_res']
         mon_lv = save_data['mon_lv']
 
-    monster_res_label = tk.Label(app)
+    monster_res_label = tk.Label(all_stats_display_app)
     monster_res_label.place(x=10, y=row(3), height=24)
     monster_res_label.configure(text='Monster RES')
     set_color(monster_res_label)
 
-    monster_res_btn = tk.Button(app)
+    monster_res_btn = tk.Button(all_stats_display_app)
     monster_res_btn.place(x=90, y=row(3), width=70, height=24)
     monster_res_btn.configure(text=int(mon_res), command=monster_res_change)
     set_color(monster_res_btn)
 
-    monster_lv_label = tk.Label(app)
+    monster_lv_label = tk.Label(all_stats_display_app)
     monster_lv_label.place(x=180, y=row(3), height=24)
     monster_lv_label.configure(text='Monster Level')
     set_color(monster_lv_label)
 
-    monster_lv_btn = tk.Button(app)
+    monster_lv_btn = tk.Button(all_stats_display_app)
     monster_lv_btn.place(x=268, y=row(3), width=70, height=24)
     monster_lv_btn.configure(text=int(mon_lv), command=monster_lv_change)
     set_color(monster_lv_btn)
 
-    app.geometry(f'350x200+140+10')
+    all_stats_display_app.geometry(f'350x200+140+10')
 
     # refresh weapon name and talent
     character_change(None)
 
-    talent_label = tk.Label(app)
+    talent_label = tk.Label(all_stats_display_app)
     talent_label.place(x=10, y=row(4), height=24)
     talent_label.configure(text='Talent Damage', font=('TkDefaultFont', 12))
     set_color(talent_label)
 
-    app.attributes('-alpha', 0.95)
+    all_stats_display_app.attributes('-alpha', 0.95)
 
 
 def main():
@@ -943,3 +944,4 @@ def main():
     save_data = read_save()
     load_all_atf()
     draw_window()
+    return
