@@ -353,26 +353,25 @@ def process_weapon(weapon, character, stats):
             stats.CR += 0.08
         elif weapon_name == 'Staff of Homa':
             stats.HP_p += 0.2
-            temp_stats.max_hp_atk_bonus += 0.008
-            condition = 'Provides an ATK Bonus based on 0.8% of the wielder\'s Max HP.'
-            condition_option.add_option(weapon_name, condition, stats)
+            stats.max_hp_atk_bonus += 0.008
+            # condition = 'Provides an ATK Bonus based on 0.8% of the wielder\'s Max HP.'
+            # condition_option.add_option(weapon_name, condition, temp_stats)
 
-            temp_stats = Stats()
-            temp_stats.max_hp_atk_bonus += 0.018
+            temp_stats.max_hp_atk_bonus += 0.01
             condition = 'When the wielder\'s HP is less than 50%, this ATK Bonus is increased by an additional 1% of Max HP.'
-            condition_option.add_option(weapon_name, condition, stats)
+            condition_option.add_option(weapon_name, condition, temp_stats)
         elif weapon_name == 'The Catch':
             stats.element_burst_dmg_bonus += 0.16
             stats.element_burst_cr += 0.06
         elif weapon_name == 'Engulfing Lightning':
             # TODO make 'Engulfing Lightning' works
             condition = 'Under develop'
-            condition_option.add_option(weapon_name, condition, stats)
+            condition_option.add_option(weapon_name, condition, temp_stats)
     elif weapon_type == 'Bow':
         if weapon_name == 'Raven Bow':
             temp_stats.all_dmg_bonus += 0.12
             condition = 'Increases DMG against opponents affected by Hydro or Pyro by 12%.'
-            condition_option.add_option(weapon_name, condition, stats)
+            condition_option.add_option(weapon_name, condition, temp_stats)
         elif weapon_name == 'Sharpshooter\'s Oath':
             temp_stats.all_dmg_bonus += 0.24
             condition = 'Increases DMG against weak spots by 24%.'
@@ -380,12 +379,12 @@ def process_weapon(weapon, character, stats):
         elif weapon_name == 'Slingshot':
             temp_stats.all_dmg_bonus += 0.36
             condition = 'If a Normal or Charged Attack hits a target within 0.3s of being fired, increases DMG by 36%.'
-            condition_option.add_option(weapon_name, condition, stats)
+            condition_option.add_option(weapon_name, condition, temp_stats)
 
             temp_stats = Stats()
             temp_stats.all_dmg_bonus -= 0.1
             condition = 'If a Normal or Charged Attack hits a target after 0.3s of being fired, decreases DMG by 10%.'
-            condition_option.add_option(weapon_name, condition, stats)
+            condition_option.add_option(weapon_name, condition, temp_stats)
         elif weapon_name == 'The Stringless':
             stats.element_skill_dmg_bonus += 0.24
             stats.element_burst_dmg_bonus += 0.24
@@ -403,14 +402,14 @@ def process_weapon(weapon, character, stats):
             temp_stats[8].all_dmg_bonus += 0.18
             temp_stats[9].all_dmg_bonus += 0.20
             condition = 'While the character equipped with this weapon is in the party but not on the field, their DMG increases by 2% every second up to a max of 20%.'
-            condition_option.add_option(weapon_name, condition, stats)
+            condition_option.add_option(weapon_name, condition, temp_stats)
         elif weapon_name == 'Blackcliff Warbow':
             temp_stats = [Stats(), Stats(), Stats()]
             temp_stats[0].ATK_p += 0.12
             temp_stats[1].ATK_p += 0.24
             temp_stats[2].ATK_p += 0.36
             condition = 'After defeating an enemy, ATK is increased by 12% for 30s. Max of 3 stacks.'
-            condition_option.add_option(weapon_name, condition, stats)
+            condition_option.add_option(weapon_name, condition, temp_stats)
         elif weapon_name == 'Compound Bow':
             temp_stats = [Stats(), Stats(), Stats(), Stats()]
             temp_stats[0].ATK_p += 0.04
@@ -724,7 +723,7 @@ def process_artifact(artifacts, character, stats):
                 temp_stats[0].PYRO_DMG += stacks_1
                 temp_stats[1].PYRO_DMG += stacks_2
                 temp_stats[2].PYRO_DMG += stacks_3
-                condition = 'Using Elemental Skill increases the 2-Piece Set Bonus by 50% of its starting value for 10s.'
+                condition = 'Using Elemental Skill increases the 2-Piece Set Bonus by 50% of its starting value for 10s. Max 3 stacks.'
                 condition_option.add_option(name, condition, temp_stats)
         elif name == 'Noblesse Oblige':
             if piece >= 2:

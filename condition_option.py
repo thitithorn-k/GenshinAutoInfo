@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+import math
 
 import all_stats_display
 
@@ -10,6 +11,7 @@ from class_file.stats import Stats
 from function.set_widget_color import set_color, top_header_color, bg_color
 
 condition_app = None
+toggle = True
 alpha = 95
 canvas = None
 stats_option = []
@@ -117,7 +119,7 @@ def draw_stats_option_window():
             set_color(each_option_option_checkbox)
 
         if len(each_option.condition) > 40:
-            row_offset += 1
+            row_offset += math.ceil(len(each_option.condition)/40)
         current_row += 1
 
         condition_app.update()
@@ -132,5 +134,15 @@ def set_alpha(value):
         alpha = value
 
 
+def toggle_show():
+    global condition_app, toggle
+    if toggle:
+        condition_app.withdraw()
+        toggle = False
+    else:
+        condition_app.deiconify()
+        toggle = True
+
+
 def row(i):
-    return 10 + (i * 30) + (row_offset*6)
+    return 10 + (i * 30) + (row_offset*4)

@@ -24,27 +24,34 @@ toggle_save = None
 
 def toggle_show(self):
     global app, toggle, toggle_save
-    from time import sleep
-    if toggle:
+    import threading
+    toggle = not toggle
+    if not toggle:
         toggle_save = app.winfo_geometry()
-        # app.geometry('0x0')
-        toggle = False
-
         app.overrideredirect(False)
         app.iconify()
         stats_confirm.toggle_show()
         all_stats_display.toggle_show()
-        while True:
-            if app.state() != 'normal':
-                sleep(0.5)
-            else:
-                app.geometry(toggle_save)
-                toggle = True
-                app.deiconify()
-                app.overrideredirect(True)
-                stats_confirm.toggle_show()
-                all_stats_display.toggle_show()
-                break
+        condition_option.toggle_show()
+        threading.Thread(target=wait_for_toggle_show).start()
+        # wait_for_toggle_show()
+
+
+def wait_for_toggle_show():
+    global app, toggle, toggle_save
+    from time import sleep
+    while True:
+        if app.state() != 'normal' and not toggle:
+            sleep(0.5)
+        else:
+            app.geometry(toggle_save)
+            toggle = True
+            app.deiconify()
+            app.overrideredirect(True)
+            stats_confirm.toggle_show()
+            all_stats_display.toggle_show()
+            condition_option.toggle_show()
+            break
 
 
 def scan(sample=False):
