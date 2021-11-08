@@ -12,15 +12,13 @@ from all_stats_display import remove_atf
 
 from class_file.app import AppTopLevel
 
-from function.set_widget_color import set_color
+from function.set_widget_color import set_color, bg_color, fg_color
 
 confirm_window_main = []
 
 
 def artifact_confirm(atf_data, alpha, is_save=False):
     return_atf_data = {}
-    bg_color = '#111111'
-    fg_color = '#eeeeee'
 
     def confirm():
         print('11111')
