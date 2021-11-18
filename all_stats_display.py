@@ -16,6 +16,7 @@ from class_file.tooltip import create_tool_tip
 from function.set_widget_color import set_color, bg_color, fg_color, top_header_color
 from function.stat_update import update_stat
 import stats_confirm
+import condition_option
 
 all_stats_display_app = None
 toggle = True
@@ -300,7 +301,7 @@ def get_character_info(char_name, level):
         char_stats.append(value)
     return Character(char_name, char_stats[0], char_stats[1], char_stats[2], char_stats[3], char_stats[4], char_stats[5], char_stats[6],
                      char_stats[7], char_stats[8], char_stats[9], char_stats[10], char_stats[11], char_stats[12], char_stats[13],
-                     char_stats[14], char_stats[15], char_stats[16], char_stats[17], char_stats[18], char_stats[19], char_stats[20], char_stats[21])
+                     char_stats[14], char_stats[15], char_stats[16], char_stats[17], char_stats[18], char_stats[19], char_stats[20], char_stats[21], level)
 
 
 def get_weapon_info(weapon_name, weapon_level):
@@ -360,7 +361,7 @@ def calculate_stats():
 
     final_stats.em = selected_character.EM + selected_weapon.EM + sum(artifact_stat.EM) + stats_sum.EM
 
-    final_stats.er = 1 + selected_character.ER + selected_weapon.ER + sum(artifact_stat.ER)
+    final_stats.er = 1 + selected_character.ER + selected_weapon.ER + sum(artifact_stat.ER) + stats_sum.ER
 
     if stats_sum.mon_res_debuff < 0:
         final_stats.monster_res = mon_res + stats_sum.mon_res_debuff*100 - \
@@ -469,13 +470,14 @@ def calculate_talent_dmg(talent_value, talent_type, normal_atk_type, talent_inde
             return_value.append(float(each_value[0:len(each_value) - 1]))
         talent_value = return_value
 
+        # calculate physical and element damage bonus
         pe_dmg_bonus = 0
-        if talent_type == 'p':
+        if talent_type == 'p' and not stats_sum.make_auto_to_element:
             pe_dmg_bonus = selected_character.PDMG + sum(artifact_stat.PDMG)
-        elif talent_type == 'e' or talent_index in [1, 2]:
+        elif talent_type == 'e' or talent_index in [1, 2] or stats_sum.make_auto_to_element:
             pe_dmg_bonus = selected_character.EDMG
             pe_dmg_bonus += stats_sum.EDMG
-            # check character elemental and and element dmg that match with them
+            # check character elemental and add element dmg bonus that match with it
             if selected_character.ELEMENTAL == 'Anemo':
                 pe_dmg_bonus += sum(artifact_stat.ANEMO_DMG)
                 pe_dmg_bonus += stats_sum.ANEMO_DMG
@@ -488,13 +490,16 @@ def calculate_talent_dmg(talent_value, talent_type, normal_atk_type, talent_inde
             elif selected_character.ELEMENTAL == 'Hydro':
                 pe_dmg_bonus += sum(artifact_stat.HYDRO_DMG)
                 pe_dmg_bonus += stats_sum.HYDRO_DMG
+                pe_dmg_bonus += stats_sum.max_er_hydro_bonus * final_stats.er
             elif selected_character.ELEMENTAL == 'Pyro':
                 pe_dmg_bonus += sum(artifact_stat.PYRO_DMG)
                 pe_dmg_bonus += stats_sum.PYRO_DMG
             elif selected_character.ELEMENTAL == 'Cryo':
                 pe_dmg_bonus += sum(artifact_stat.CRYO_DMG)
                 pe_dmg_bonus += stats_sum.CRYO_DMG
+            # print('pe= ', pe_dmg_bonus)
 
+        # calculate dmg_bonus
         all_dmg_bonus = stats_sum.all_dmg_bonus
         if talent_index == 0:
             if normal_atk_type == 'n':
@@ -503,10 +508,13 @@ def calculate_talent_dmg(talent_value, talent_type, normal_atk_type, talent_inde
                 all_dmg_bonus += stats_sum.charge_attack_dmg_bonus
             if normal_atk_type == 'p':
                 all_dmg_bonus += stats_sum.plunging_attack_dmg_bonus
+            all_dmg_bonus += stats_sum.max_hp_auto_attack_dmg_bonus * final_stats.hp_normal
         elif talent_index == 1:
             all_dmg_bonus += stats_sum.element_skill_dmg_bonus
+            all_dmg_bonus += stats_sum.max_hp_element_skill_dmg_bonus * final_stats.hp_normal
         elif talent_index == 2:
             all_dmg_bonus += stats_sum.element_burst_dmg_bonus
+            all_dmg_bonus += stats_sum.element_burst_dmg_bonus * final_stats.hp_normal
 
         a = ((100 + selected_character.level) / ((100 + selected_character.level) + ((100 + mon_lv) * (1 + stats_sum.mon_def_debuff))))
         b = ((stats_sum.max_hp_dmg_bonus * final_stats.hp_normal) * (1 - final_stats.monster_res / 100) * (
@@ -543,14 +551,24 @@ def calculate_talent_dmg(talent_value, talent_type, normal_atk_type, talent_inde
                 talent_value_final[2] += ' + '
             if talent_value_multi > 1:
                 talent_value_final[2] += f'*{talent_value_multi}'
-    elif talent_type in ['n_bonus']:
-        # TODO make n_bonus works
-        talent_value_final = 'under_dev'
+
+    # special talent type
+    elif talent_type == 'hutao_e':
+        talent_value_temp = talent_value.split('|')
+        talent_value_final = [None]
+        talent_value_final[0] = f'{talent_value_temp[0]} of Max HP'
+
+        temp_stat = Stats()
+        # temp_stat.ATK += (float(talent_value_temp[0][:len(talent_value_temp[0])-2])/100) * final_stats.hp_normal
+        temp_stat.max_hp_atk_bonus += (float(talent_value_temp[0][:len(talent_value_temp[0])-1])/100)
+        temp_stat.make_auto_to_element += 1
+        print('temp= ', temp_stat.max_hp_atk_bonus)
+        condition_option.add_option('Hutao - Guild to Afterlife', 'Increases Hu Tao\'s ATK based on her Max HP', temp_stat, True)
+
+    # other case (wait for dev)
     else:
-        talent_value_final = [None]*3
-        talent_value_final[0] = str(talent_value)
-        talent_value_final[1] = str(talent_value)
-        talent_value_final[2] = str(talent_value)
+        talent_value_final = [None]
+        talent_value_final[0] = 'under_dev'
 
     return talent_value_final
 
@@ -583,10 +601,11 @@ def draw_talent(stats_update=True):
         save_data['characters'][selected_character.name]['talents_level'][i] = talent_level_var[i].get()
         write_save(save_data)
         draw_talent()
+
     if selected_character and selected_weapon:
         if stats_update:
             global stats
-            stats = update_stat(selected_character, selected_weapon, artifacts, stats)
+            stats = update_stat(selected_character, selected_weapon, artifacts)
         calculate_stats()
 
     for each_main in talent_name_label:
@@ -643,7 +662,8 @@ def draw_talent(stats_update=True):
             sub_talent_damage_label[last_sub_talent_damage_label].place(x=188, y=row(current_row), width=150, height=24)
             sub_talent_damage_label[last_sub_talent_damage_label].configure(text=' | '.join(talent_value), anchor='e', justify=tk.RIGHT)
             set_color(sub_talent_damage_label[last_sub_talent_damage_label])
-            create_tool_tip(sub_talent_damage_label[last_sub_talent_damage_label], text=f'normal dmg: {talent_value[0]} | critical dmg: {talent_value[1]} | average dmg: {talent_value[2]}')
+            if len(talent_value) == 3:
+                create_tool_tip(sub_talent_damage_label[last_sub_talent_damage_label], text=f'normal dmg: {talent_value[0]} | critical dmg: {talent_value[1]} | average dmg: {talent_value[2]}')
     global drew
     if not drew:
         all_stats_display_app.geometry(f'350x{row(current_row + 1) + 6}+140+10')

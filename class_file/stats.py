@@ -27,6 +27,7 @@ class Stats:
         self.max_hp_dmg_bonus = 0
         self.all_dmg_bonus = 0
         self.max_hp_atk_bonus = 0  #
+        self.max_er_hydro_bonus = 0  # for Mona
 
         self.normal_attack_dmg_bonus = 0
         self.charge_attack_dmg_bonus = 0
@@ -37,6 +38,10 @@ class Stats:
         self.element_burst_dmg_bonus = 0
         self.element_burst_cr = 0  #
 
+        self.max_hp_auto_attack_dmg_bonus = 0
+        self.max_hp_element_skill_dmg_bonus = 0
+        self.max_hp_element_burst_dmg_bonus = 0
+
         self.overloaded_dmg_bonus = 0  #
         self.electro_charged_dmg_bonus = 0  #
         self.superconduct_dmg_bonus = 0  #
@@ -44,6 +49,8 @@ class Stats:
         self.vaporize_dmg_bonus = 0  #
         self.melt_dmg_bonus = 0  #
         self.burning_dmg_bonus = 0  #
+
+        self.make_auto_to_element = 0
 
     def __add__(self, other):
         temp = Stats()
@@ -74,7 +81,7 @@ class Stats:
         temp.max_hp_dmg_bonus = self.max_hp_dmg_bonus + other.max_hp_dmg_bonus
         temp.all_dmg_bonus = self.all_dmg_bonus + other.all_dmg_bonus
         temp.max_hp_atk_bonus = self.max_hp_atk_bonus + other.max_hp_atk_bonus
-        temp.element_burst_cr = self.element_burst_cr + other.element_burst_cr
+        temp.max_er_hydro_bonus = self.max_er_hydro_bonus + other.max_er_hydro_bonus
 
         temp.normal_attack_dmg_bonus = self.normal_attack_dmg_bonus + other.normal_attack_dmg_bonus
         temp.charge_attack_dmg_bonus = self.charge_attack_dmg_bonus + other.charge_attack_dmg_bonus
@@ -83,6 +90,11 @@ class Stats:
         temp.element_skill_dmg_bonus = self.element_skill_dmg_bonus + other.element_skill_dmg_bonus
         temp.element_skill_cr = self.element_skill_cr + other.element_skill_cr
         temp.element_burst_dmg_bonus = self.element_burst_dmg_bonus + other.element_burst_dmg_bonus
+        temp.element_burst_cr = self.element_burst_cr + other.element_burst_cr
+
+        temp.max_hp_auto_attack_dmg_bonus = self.max_hp_auto_attack_dmg_bonus + other.max_hp_auto_attack_dmg_bonus
+        temp.max_hp_element_skill_dmg_bonus = self.max_hp_element_skill_dmg_bonus + other.max_hp_element_skill_dmg_bonus
+        temp.max_hp_element_burst_dmg_bonus = self.max_hp_element_burst_dmg_bonus + other.max_hp_element_burst_dmg_bonus
 
         temp.overloaded_dmg_bonus = self.overloaded_dmg_bonus + other.overloaded_dmg_bonus
         temp.electro_charged_dmg_bonus = self.electro_charged_dmg_bonus + other.electro_charged_dmg_bonus
@@ -91,6 +103,8 @@ class Stats:
         temp.vaporize_dmg_bonus = self.vaporize_dmg_bonus + other.vaporize_dmg_bonus
         temp.melt_dmg_bonus = self.melt_dmg_bonus + other.melt_dmg_bonus
         temp.burning_dmg_bonus = self.burning_dmg_bonus + other.burning_dmg_bonus
+
+        temp.make_auto_to_element = self.make_auto_to_element + other.make_auto_to_element
         return temp
 
     def __sub__(self, other):
@@ -122,6 +136,7 @@ class Stats:
         temp.max_hp_dmg_bonus = self.max_hp_dmg_bonus - other.max_hp_dmg_bonus
         temp.all_dmg_bonus = self.all_dmg_bonus - other.all_dmg_bonus
         temp.max_hp_atk_bonus = self.max_hp_atk_bonus - other.max_hp_atk_bonus
+        temp.max_er_hydro_bonus = self.max_er_hydro_bonus - other.max_er_hydro_bonus
 
         temp.normal_attack_dmg_bonus = self.normal_attack_dmg_bonus - other.normal_attack_dmg_bonus
         temp.charge_attack_dmg_bonus = self.charge_attack_dmg_bonus - other.charge_attack_dmg_bonus
@@ -132,6 +147,10 @@ class Stats:
         temp.element_burst_dmg_bonus = self.element_burst_dmg_bonus - other.element_burst_dmg_bonus
         temp.element_burst_cr = self.element_burst_cr - other.element_burst_cr
 
+        temp.max_hp_auto_attack_dmg_bonus = self.max_hp_auto_attack_dmg_bonus - other.max_hp_auto_attack_dmg_bonus
+        temp.max_hp_element_skill_dmg_bonus = self.max_hp_element_skill_dmg_bonus - other.max_hp_element_skill_dmg_bonus
+        temp.max_hp_element_burst_dmg_bonus = self.max_hp_element_burst_dmg_bonus - other.max_hp_element_burst_dmg_bonus
+
         temp.overloaded_dmg_bonus = self.overloaded_dmg_bonus - other.overloaded_dmg_bonus
         temp.electro_charged_dmg_bonus = self.electro_charged_dmg_bonus - other.electro_charged_dmg_bonus
         temp.superconduct_dmg_bonus = self.superconduct_dmg_bonus - other.superconduct_dmg_bonus
@@ -139,4 +158,6 @@ class Stats:
         temp.vaporize_dmg_bonus = self.vaporize_dmg_bonus - other.vaporize_dmg_bonus
         temp.melt_dmg_bonus = self.melt_dmg_bonus - other.melt_dmg_bonus
         temp.burning_dmg_bonus = self.burning_dmg_bonus - other.burning_dmg_bonus
+
+        temp.make_auto_to_element = self.make_auto_to_element - other.make_auto_to_element
         return temp

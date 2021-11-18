@@ -21,9 +21,16 @@ row_offset = 0
 each_option_option_combobox_var = None
 
 
-def add_option(name, condition, stats):
-    stats_option.append(StatsOption(name, condition, stats))
-    draw_stats_option_window()
+def add_option(name, condition, stats, draw=False):
+    check_duplicate = False
+    new_stats_option = StatsOption(name, condition, stats)
+    for so in stats_option:
+        if so == new_stats_option:
+            check_duplicate = True
+    if not check_duplicate:
+        stats_option.append(new_stats_option)
+        if draw:
+            draw_stats_option_window()
 
 
 def reset_all_option():
@@ -43,6 +50,8 @@ def toggle_option(option):
             else:
                 stack -= 1
             all_stats_display.option_stats += option.stats[stack]
+            print('stack= ', stack)
+            option.stack_combobox.configure(state='disable')
         else:
             all_stats_display.option_stats += option.stats
     else:
@@ -53,6 +62,7 @@ def toggle_option(option):
             else:
                 stack -= 1
             all_stats_display.option_stats -= option.stats[stack]
+            option.stack_combobox.configure(state='normal')
         else:
             all_stats_display.option_stats -= option.stats
     all_stats_display.draw_talent(False)
@@ -117,10 +127,18 @@ def draw_stats_option_window():
                                                       values=each_option_option_combobox_choices)
             each_option_stack_combobox.place(x=240, y=row(current_row), width=50)
             set_color(each_option_option_checkbox)
+            if len(each_option.condition) > 35:
+                row_offset += math.ceil(len(each_option.condition) / 35)
 
-        if len(each_option.condition) > 40:
-            row_offset += math.ceil(len(each_option.condition)/40)
+            # set combo box to each op
+            stats_option[i].stack_combobox = each_option_stack_combobox
+        else:
+            if len(each_option.condition) > 46:
+                row_offset += math.ceil(len(each_option.condition)/46)
         current_row += 1
+
+        condition_app.geometry(f'300x{row(current_row+1)+10}')
+        canvas.configure(height=row(current_row+1)+10)
 
         condition_app.update()
         # condition_app.mainloop()
@@ -145,4 +163,4 @@ def toggle_show():
 
 
 def row(i):
-    return 10 + (i * 30) + (row_offset*4)
+    return 10 + (i * 30) + (row_offset*6)
