@@ -68,10 +68,9 @@ def toggle_option(option):
     all_stats_display.draw_talent(False)
 
 
-def draw_stats_option_window():
+def draw_stats_option_window(app=None):
     global condition_app, stats_option, canvas, row_offset
     if condition_app is None:
-        from main import app
         condition_app = AppTopLevel(app)
         condition_app.geometry('300x500+500+10')
         condition_app.attributes('-alpha', 0.95)

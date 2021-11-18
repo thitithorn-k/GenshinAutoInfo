@@ -11,6 +11,7 @@ from scan import run
 import stats_confirm
 import all_stats_display
 import condition_option
+import party_setting
 
 from class_file.app import AppMain
 
@@ -138,7 +139,9 @@ def main():
     app.attributes('-alpha', 0.95)
     app.update()
     all_stats_display.main(app)
-    condition_option.draw_stats_option_window()
+    condition_option.draw_stats_option_window(app)
+    party_setting.draw_window(app)
+
     app.mainloop()
 
 

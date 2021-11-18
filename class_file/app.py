@@ -2,6 +2,7 @@ import tkinter as tk
 
 bg_color = '#111133'
 
+
 class AppMain(tk.Tk):
     def __init__(self, master=None):
         tk.Tk.__init__(self, master)

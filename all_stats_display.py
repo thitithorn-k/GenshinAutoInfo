@@ -9,7 +9,7 @@ from class_file.artifact_stat import ArtifactStat
 from class_file.stats import Stats
 from class_file.character import Character
 from class_file.weapon import Weapon
-from class_file.filnal_stats import FinalStats
+from class_file.final_stats import FinalStats
 from class_file.app import AppTopLevel
 from class_file.tooltip import create_tool_tip
 
@@ -464,7 +464,11 @@ def calculate_talent_dmg(talent_value, talent_type, normal_atk_type, talent_inde
         talent_value = talent_value[0].split('*')
         if len(talent_value) >= 2:
             talent_value_multi = int(talent_value[1])
-        talent_value = talent_value[0].split('&')
+
+        split_char = '&'
+        if '/' in talent_value[0]:
+            split_char = '/'
+        talent_value = talent_value[0].split(split_char)
         return_value = []
         for each_value in talent_value:
             return_value.append(float(each_value[0:len(each_value) - 1]))
@@ -529,26 +533,32 @@ def calculate_talent_dmg(talent_value, talent_type, normal_atk_type, talent_inde
             temp_average_value.append((dmg_base_average * (1 - final_stats.monster_res / 100) * a * (each_value / 100) + b) * 1 * (
                         1 + all_dmg_bonus + pe_dmg_bonus))
 
-        talent_value_final = [None]*3
+        talent_value_final = ['', '', '']
         for i, each_temp in enumerate(temp_value):
-            talent_value_final[0] = ''
             talent_value_final[0] += str(round(each_temp) + (int(talent_value_add) if talent_value_add else 0))
+            add_char = ' + '
+            if len(temp_value) > 2:
+                add_char = '/'
             if i+1 < len(temp_value):
-                talent_value_final[0] += ' + '
+                talent_value_final[0] += add_char
             if talent_value_multi > 1:
                 talent_value_final[0] += f'*{talent_value_multi}'
         for i, each_temp in enumerate(temp_crit_value):
-            talent_value_final[1] = ''
             talent_value_final[1] += str(round(each_temp) + (int(talent_value_add) if talent_value_add else 0))
+            add_char = ' + '
+            if len(temp_value) > 2:
+                add_char = '/'
             if i+1 < len(temp_value):
-                talent_value_final[1] += ' + '
+                talent_value_final[1] += add_char
             if talent_value_multi > 1:
                 talent_value_final[1] += f'*{talent_value_multi}'
         for i, each_temp in enumerate(temp_average_value):
-            talent_value_final[2] = ''
             talent_value_final[2] += str(round(each_temp) + (int(talent_value_add) if talent_value_add else 0))
+            add_char = ' + '
+            if len(temp_value) > 2:
+                add_char = '/'
             if i+1 < len(temp_value):
-                talent_value_final[2] += ' + '
+                talent_value_final[2] += add_char
             if talent_value_multi > 1:
                 talent_value_final[2] += f'*{talent_value_multi}'
 
@@ -660,7 +670,10 @@ def draw_talent(stats_update=True):
             sub_talent_damage_label.append(tk.Label(all_stats_display_app))
             last_sub_talent_damage_label = len(sub_talent_damage_label)-1
             sub_talent_damage_label[last_sub_talent_damage_label].place(x=188, y=row(current_row), width=150, height=24)
-            sub_talent_damage_label[last_sub_talent_damage_label].configure(text=' | '.join(talent_value), anchor='e', justify=tk.RIGHT)
+            talent_value_text = ' | '.join(talent_value)
+            if len(talent_value_text) > 24:
+                talent_value_text = '* ' + ' | '.join(v.split('/')[0] for v in talent_value)
+            sub_talent_damage_label[last_sub_talent_damage_label].configure(text=talent_value_text, anchor='e', justify=tk.RIGHT)
             set_color(sub_talent_damage_label[last_sub_talent_damage_label])
             if len(talent_value) == 3:
                 create_tool_tip(sub_talent_damage_label[last_sub_talent_damage_label], text=f'normal dmg: {talent_value[0]} | critical dmg: {talent_value[1]} | average dmg: {talent_value[2]}')
@@ -678,7 +691,6 @@ def draw_window(app):
     global save_data, weapons_data
 
     global all_stats_display_app
-    print(app)
     all_stats_display_app = AppTopLevel(app)
 
     head_canvas = tk.Canvas(all_stats_display_app)
