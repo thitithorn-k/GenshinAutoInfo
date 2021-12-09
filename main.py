@@ -21,6 +21,7 @@ alpha = 95
 app = None
 toggle = True
 toggle_save = None
+debug = False
 
 
 def toggle_show(self):
@@ -77,7 +78,6 @@ def exit_program():
 
 
 def main():
-
     def set_alpha(value):
         global alpha
         alpha = value
@@ -87,9 +87,15 @@ def main():
         all_stats_display.set_alpha(value)
         condition_option.set_alpha(value)
 
+    row_now = 0
+    if debug:
+        all_row = 9
+    else:
+        all_row = 8
+
     global app
     app = AppMain()
-    app.geometry('120x190+10+10')
+    app.geometry(f'120x{row(all_row)+5}+10+10')
     app.title('Genshin Auto Info')
     app.configure(bg=bg_color)
     app.option_add("*TCombobox*Listbox*Background", bg_color)
@@ -104,41 +110,64 @@ def main():
                 background=bg_color, highlightthickness=0)
 
     head_label = tk.Label(app)
-    head_label.place(x=10, y=10, width=100, height=24)
+    head_label.place(x=10, y=row(row_now), width=100, height=24)
     head_label.configure(text='Genshin Auto Info')
     set_color(head_label)
+    row_now += 1
 
     run_btn = tk.Button(app)
-    run_btn.place(x=10, y=40, width=100, height=24)
+    run_btn.place(x=10, y=row(row_now), width=100, height=24)
     run_btn.configure(text=get_text('scan'))
     run_btn.configure(command=scan)
     set_color(run_btn)
+    row_now += 1
 
-    run_sample_btn = tk.Button(app)
-    run_sample_btn.place(x=10, y=70, width=100, height=24)
-    run_sample_btn.configure(text=get_text('scan_sam'))
-    run_sample_btn.configure(command=scan_sample)
-    set_color(run_sample_btn)
+    if debug:
+        run_sample_btn = tk.Button(app)
+        run_sample_btn.place(x=10, y=row(row_now), width=100, height=24)
+        run_sample_btn.configure(text=get_text('scan_sam'))
+        run_sample_btn.configure(command=scan_sample)
+        set_color(run_sample_btn)
+        row_now += 1
 
-    about_btn = tk.Button(app)
-    about_btn.place(x=10, y=100, width=100, height=24)
-    about_btn.configure(text=get_text('about'))
-    # about_btn.configure(command=scan_sample)
-    set_color(about_btn)
+    row_now += 1
 
-    close_btn = tk.Button(app)
-    close_btn.place(x=10, y=130, width=100, height=24)
-    close_btn.configure(text=get_text('close'))
-    close_btn.configure(command=exit_program)
-    set_color(close_btn)
+    party_btn = tk.Button(app)
+    party_btn.place(x=10, y=row(row_now), width=100, height=24)
+    party_btn.configure(text=get_text('Party Setting'))
+    party_btn.configure(command=party_setting.toggle_show)
+    set_color(party_btn)
+    row_now += 1
+
+    party_btn = tk.Button(app)
+    party_btn.place(x=10, y=row(row_now), width=100, height=24)
+    party_btn.configure(text=get_text('Stats Option'))
+    party_btn.configure(command=condition_option.toggle_show)
+    set_color(party_btn)
+    row_now += 1
 
     alpha_set_scale = ttk.Scale(app, from_=30, to=100)
-    alpha_set_scale.place(x=10, y=160, width=100)
+    alpha_set_scale.place(x=10, y=row(row_now), width=100)
     alpha_set_scale.configure(length='97')
     alpha_set_scale.configure(takefocus='')
     alpha_set_scale.configure(orient=tk.HORIZONTAL)
     alpha_set_scale.set(95)
     alpha_set_scale.configure(command=set_alpha)
+    row_now += 1
+
+    about_btn = tk.Button(app)
+    about_btn.place(x=10, y=row(row_now), width=100, height=24)
+    about_btn.configure(text=get_text('about'))
+    # about_btn.configure(command=scan_sample)
+    set_color(about_btn)
+    row_now += 1
+
+    close_btn = tk.Button(app)
+    close_btn.place(x=10, y=row(row_now), width=100, height=24)
+    close_btn.configure(text=get_text('close'))
+    close_btn.configure(command=exit_program)
+    set_color(close_btn)
+    row_now += 1
 
     app.attributes('-alpha', 0.95)
     app.update()
@@ -148,6 +177,9 @@ def main():
 
     app.mainloop()
 
+
+def row(i):
+    return 10+(30*i)
 
 if __name__ == '__main__':
     keyboard.on_press_key("F12", toggle_show)
