@@ -3,6 +3,7 @@ from class_file.stats import Stats
 from class_file.character import Character
 from class_file.weapon import Weapon
 from class_file.stats import Stats
+from data import char_level_offset
 
 
 def update_stat(character, weapon, artifacts):
@@ -17,12 +18,11 @@ def update_stat(character, weapon, artifacts):
 
 
 def process_selected_character(character, stats):
-    level_ofset = ['1', '20', '20+', '40', '40+', '50', '50+', '60', '60+', '70', '70+', '80', '80+', '90']
     # level ofset
     # level 1: 20+ = 2
     # level 4: 60+ = 8
     char_name = character.name
-    char_lvi = level_ofset.index(character.level_text)
+    char_lvi = char_level_offset.index(character.level_text)
     temp_stats = Stats()
 
     if char_name == 'Amber':

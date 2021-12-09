@@ -51,6 +51,63 @@ import reader
 #
 
 
+char_level_offset = [
+    '1', '20', '20+', '40', '40+', '50', '50+', '60', '60+', '70', '70+', '80', '80+', '90'
+]
+weapons_level_offset = [
+    '1', '5', '10', '15', '20', '20+', '25', '30', '35', '40', '40+', '45', '50', '50+',
+    '55', '60', '60+', '65', '70', '70+', '75', '80', '80+', '85', '90'
+]
+weapons_type = ['All', 'Sword', 'Claymore', 'Polearm', 'Bow', 'Catalyst']
+character_name = [
+    'Zhongli',
+    'Ganyu',
+    'Klee',
+    'Keqing',
+    'Kaeya',
+    'Amber',
+    'Barbara',
+    'Beidou',
+    'Bennett',
+    'Chongyun',
+    'Diluc',
+    'Fischl',
+    'Jean',
+    'Lisa',
+    'Mona',
+    'Ningguang',
+    'Noelle',
+    'Qiqi',
+    'Razor',
+    'Sucrose',
+    'Traveler Male Anemo',
+    'Venti',
+    'Xiangling',
+    'Xiao',
+    'Xingqiu',
+    'Tartaglia',
+    'Diona',
+    'Xinyan',
+    'Albedo',
+    'Rosaria',
+    'Hu Tao',
+    'Yanfei',
+    'Eula',
+    'Kaedehara Kazuha',
+    'Kamisato Ayaka',
+    'Yoimiya',
+    'Sayu',
+    'Raiden Shogun',
+    'Sangonomiya Kokomi',
+    'Aloy',
+    'Kujou Sara',
+    'Traveler Female Anemo',
+    'Traveler Male Geo',
+    'Traveler Female Geo',
+    'Traveler Male Electro',
+    'Traveler Female Electro'
+]
+
 load_data = np.load('./data/data.npy', allow_pickle=True)
 
 

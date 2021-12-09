@@ -12,7 +12,7 @@ from all_stats_display import remove_atf
 
 from class_file.app import AppTopLevel
 
-from function.set_widget_color import set_color, bg_color, fg_color
+from function.set_widget import set_color, bg_color, fg_color
 
 confirm_window_main = []
 
@@ -328,10 +328,10 @@ def set_alpha(value):
             each[0].update()
 
 
-def toggle_show():
+def toggle_show(fix_stat=-1):
     if confirm_window_main is not []:
         for each in confirm_window_main:
-            if each[1]:
+            if each[1] or (fix_stat == 0 and fix_stat != 1):
                 each[0].withdraw()
                 each[1] = False
             else:

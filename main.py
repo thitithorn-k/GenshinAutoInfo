@@ -15,7 +15,7 @@ import party_setting
 
 from class_file.app import AppMain
 
-from function.set_widget_color import set_color, bg_color, fg_color
+from function.set_widget import set_color, bg_color, fg_color
 
 alpha = 95
 app = None
@@ -31,9 +31,12 @@ def toggle_show(self):
         toggle_save = app.winfo_geometry()
         app.overrideredirect(False)
         app.iconify()
-        stats_confirm.toggle_show()
-        all_stats_display.toggle_show()
-        condition_option.toggle_show()
+
+        stats_confirm.toggle_show(0)
+        all_stats_display.toggle_show(0)
+        condition_option.toggle_show(0)
+        party_setting.toggle_show(0)
+
         threading.Thread(target=wait_for_toggle_show).start()
         # wait_for_toggle_show()
 
@@ -49,9 +52,10 @@ def wait_for_toggle_show():
             toggle = True
             app.deiconify()
             app.overrideredirect(True)
-            stats_confirm.toggle_show()
-            all_stats_display.toggle_show()
-            condition_option.toggle_show()
+            stats_confirm.toggle_show(1)
+            all_stats_display.toggle_show(1)
+            condition_option.toggle_show(1)
+            party_setting.toggle_show(1)
             break
 
 

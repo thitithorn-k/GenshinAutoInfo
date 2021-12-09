@@ -8,7 +8,7 @@ from class_file.app import AppTopLevel
 from class_file.stats_option import StatsOption
 from class_file.stats import Stats
 
-from function.set_widget_color import set_color, top_header_color, bg_color
+from function.set_widget import set_color, top_header_color, bg_color
 
 condition_app = None
 toggle = True
@@ -89,6 +89,11 @@ def draw_stats_option_window(app=None):
     head_canvas.configure(width=300, height=25, bd=0, bg=top_header_color, highlightthickness=0)
     head_canvas.place(x=0, y=0)
 
+    minimize_btn = tk.Button(head_canvas)
+    minimize_btn.configure(text='-', command=lambda: toggle_show(0))
+    minimize_btn.place(width=18, height=18, x=279, y=4)
+    set_color(minimize_btn)
+
     canvas = tk.Canvas(condition_app)
     canvas.place(x=0, y=25)
     set_color(canvas, False)
@@ -151,9 +156,9 @@ def set_alpha(value):
         alpha = value
 
 
-def toggle_show():
+def toggle_show(fix_stat=-1):
     global condition_app, toggle
-    if toggle:
+    if toggle or (fix_stat == 0 and fix_stat != 1):
         condition_app.withdraw()
         toggle = False
     else:
