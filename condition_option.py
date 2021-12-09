@@ -72,7 +72,7 @@ def draw_stats_option_window(app=None):
     global condition_app, stats_option, canvas, row_offset
     if condition_app is None:
         condition_app = AppTopLevel(app)
-        condition_app.geometry('300x500+500+10')
+        condition_app.geometry('300x500+500+155')
         condition_app.attributes('-alpha', 0.95)
     else:
         condition_app.deiconify()
@@ -98,11 +98,12 @@ def draw_stats_option_window(app=None):
     canvas.place(x=0, y=25)
     set_color(canvas, False)
 
-    option_label = tk.Label(canvas)
-    option_label.configure(text='Option', font=('TkDefaultFont', 12))
-    option_label.place(x=10, y=row(0))
+    option_label = tk.Label(head_canvas)
+    option_label.configure(text='Stats Option')
+    option_label.place(x=5, y=3)
     set_color(option_label)
-    current_row = 1
+    option_label.configure(bg=top_header_color)
+    current_row = 0
 
     last_name = ''
     for i, each_option in enumerate(stats_option):
