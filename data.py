@@ -162,8 +162,9 @@ class Translate:
         'cri_rate': 'Crit Rate',
         'cri_dmg': 'Crit DMG',
         'healing': 'Healing Bonus',
-        'scan': 'Scan',
+        'scan': 'Scan an artifact',
         'scan_sam': 'Scan Sample',
+        'scan_all': 'Scan all artifacts',
         'about': 'About',
         'close': 'Close',
         'confirm': 'Confirm',
@@ -178,7 +179,23 @@ class Translate:
         'no': 'No',
         'none': 'None',
         'add_confirm_question_start': 'The text on the image above is ',
-        'add_confirm_question_end': 'I can read it clearly and\nit doesn\'t have any \'white dot\' on it '
+        'add_confirm_question_end': 'I can read it clearly and\nit doesn\'t have any \'white dot\' on it ',
+
+        'Character': 'Character',
+        'Weapon': 'Weapon',
+        'Artifacts': 'Artifacts',
+        'Monster RES': 'Monster RES',
+        'Monster Level': 'Monster Level',
+
+        'Party Member': 'Party Member',
+
+        'Flower': 'Flower',
+        'Plume': 'Plume',
+        'Sands': 'Sands',
+        'Goblet': 'Goblet',
+        'Circlet': 'Circlet',
+
+        'Option': 'Option'
     }
     th = {
         'hp': 'พลังชีวิค',
@@ -196,8 +213,9 @@ class Translate:
         'cri_rate': 'อัตราคริ',
         'cri_dmg': 'ความแรงคริ',
         'healing': 'โบนัสการรักษา',
-        'scan': 'แสกน',
+        'scan': 'แสกนอาร์ติแฟกต์',
         'scan_sam': 'แสกนตัวอย่าง',
+        'scan_all': 'แสกนทุกอาติแฟกต์',
         'about': 'เกี่ยวกับ',
         'close': 'ปิดโปรแกรม',
         'confirm': 'ยืนยัน',
@@ -212,11 +230,27 @@ class Translate:
         'no': 'ไม่ใช่',
         'none': 'ไม่มี',
         'add_confirm_question_start': 'ข้อความในภาพด้านบนคือ ',
-        'add_confirm_question_end': 'ฉันสามารถอ่านมันได้อย่างง่ายดาย\nและไม่มีจุดสีขาวปะปนอยู่ในภาพ'
+        'add_confirm_question_end': 'ฉันสามารถอ่านมันได้อย่างง่ายดาย\nและไม่มีจุดสีขาวปะปนอยู่ในภาพ',
+
+        'Character': 'ตัวละคร',
+        'Weapon': 'อาวุธ',
+        'Artifacts': 'อาร์ติแฟกต์',
+        'Monster RES': 'ความต้านทานมอนส์เตอร์',
+        'Monster Level': 'เลเวลมอนส์เตอร์',
+
+        'Party Member': 'Party Member',
+
+        'Flower': 'ดอกไม้',
+        'Plume': 'ขนนก',
+        'Sands': 'นาฬิกา',
+        'Goblet': 'ถ้วย',
+        'Circlet': 'หมวก',
+
+        'Option': 'ตัวเลือก'
     }
 
 
-language = 1
+language = 0
 
 
 def get_text(text):
